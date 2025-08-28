@@ -43,8 +43,8 @@ app.post('/create-checkout-session', async (req, res) => {
       line_items: line_items,
       mode: 'payment',
       // IMPORTANT: Replace these with your live website's URLs
-      success_url: `https://YOUR_WEBSITE_URL/success`, // A page to show on successful payment
-      cancel_url: `https://YOUR_WEBSITE_URL/cancel`,   // A page to show if the user cancels
+      success_url: `https://seven17.netlify.app?success=true // A page to show on successful payment
+      cancel_url: `https://seven17.netlify.app?canceled=true`,   // A page to show if the user cancels
     });
 
     // Send the session ID back to the React app
