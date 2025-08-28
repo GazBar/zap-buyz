@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // --- FIREBASE SETUP ---
@@ -200,8 +200,18 @@ const AdminPage = () => {
                     {messages.length > 0 ? (
                         messages.map(msg => (
                             <div key={msg.id} className="p-4 border rounded-md bg-gray-50">
-                                <p className="font-semibold">{msg.name} <span className="font-normal text-gray-500">- {msg.email}</span></p>
-                                <p className="mt-2 text-gray-700">{msg.message}</p>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold">{msg.name} <span className="font-normal text-gray-500">- {msg.email}</span></p>
+                                        <p className="mt-2 text-gray-700">{msg.message}</p>
+                                    </div>
+                                    <a 
+                                      href={`mailto:${msg.email}?subject=Re: Your message to Seven 17`}
+                                      className="flex items-center px-3 py-1 text-sm font-semibold text-white bg-lime-500 rounded-md hover:bg-lime-600 transition-colors"
+                                    >
+                                      <Mail className="w-4 h-4 mr-2"/> Reply
+                                    </a>
+                                </div>
                                 <p className="mt-2 text-xs text-gray-400">
                                     Received: {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleString() : 'No date'}
                                 </p>
