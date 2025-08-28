@@ -175,7 +175,7 @@ export default function App() {
 
     const handleCheckout = async () => {
         if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; }
-        const stripe = window.Stripe('YOUR_PUBLISHABLE_KEY_HERE');
+        const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
         const response = await fetch('https://seven-17.onrender.com/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
