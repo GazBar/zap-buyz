@@ -97,7 +97,7 @@ const ProductCard = ({ product, onViewProduct, onAddToCart }) => (
         <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
         <p className="mt-1 text-sm text-gray-600 truncate flex-grow">{product.description}</p>
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xl font-bold text-gray-900">${product.price.toFixed(2)}</p>
+          <p className="text-xl font-bold text-gray-900">£{product.price.toFixed(2)}</p>
           <div className="flex items-center text-sm text-gray-500">
             <Star className="w-4 h-4 mr-1 text-yellow-400 fill-current" />
             <span>{product.rating} ({product.reviews})</span>
@@ -150,7 +150,7 @@ const ProductsPage = ({ setSelectedProduct, setCurrentPage, addToCart }) => (
 const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart }) => (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:space-x-8">
-            <div className="w-full lg:w-1/2">
+            <div className="w-full lg:w-1-2">
                 <img src={selectedProduct.image} alt={selectedProduct.name} className="object-cover w-full rounded-2xl shadow-xl" />
             </div>
             <div className="w-full mt-8 lg:w-1/2 lg:mt-0">
@@ -161,7 +161,7 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart }) => (
                         <span className="text-lg font-semibold text-gray-600 ml-2">{selectedProduct.rating}</span>
                         <span className="text-sm text-gray-500">({selectedProduct.reviews} reviews)</span>
                     </div>
-                    <p className="mt-4 text-3xl font-bold text-gray-900">${selectedProduct.price.toFixed(2)}</p>
+                    <p className="mt-4 text-3xl font-bold text-gray-900">£{selectedProduct.price.toFixed(2)}</p>
                 </div>
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold text-gray-900">Product Description</h2>
@@ -257,9 +257,10 @@ export default function App() {
             return;
         }
         // IMPORTANT: Replace with your publishable key.
-        const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
-        const response = await fetch('https://seven-17.onrender.com/create-checkout-session', { ... });
-                    method: 'POST',
+        const stripe = window.Stripe('YOUR_PUBLISHABLE_KEY_HERE');
+        
+        const response = await fetch('http://localhost:4242/create-checkout-session', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart }),
         });
@@ -330,7 +331,7 @@ export default function App() {
                                     <img src={item.image} alt={item.name} className="object-cover w-16 h-16 mr-4 rounded-md" />
                                     <div className="flex-1">
                                         <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                                        <p className="text-sm text-gray-600">${item.price.toFixed(2)} x {item.quantity}</p>
+                                        <p className="text-sm text-gray-600">£{item.price.toFixed(2)} x {item.quantity}</p>
                                         <div className="flex items-center mt-2">
                                             <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2 py-1 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200" aria-label="Decrease quantity">-</button>
                                             <span className="w-8 mx-2 text-center">{item.quantity}</span>
@@ -343,7 +344,7 @@ export default function App() {
                         </div>
                         {cart.length > 0 && (
                             <div className="p-4 bg-gray-50">
-                                <div className="flex justify-between text-lg font-bold"><span>Total:</span><span>${calculateTotal()}</span></div>
+                                <div className="flex justify-between text-lg font-bold"><span>Total:</span><span>£{calculateTotal()}</span></div>
                                 <button onClick={handleCheckout} className="w-full py-3 mt-4 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-lg hover:bg-blue-700">Checkout</button>
                             </div>
                         )}

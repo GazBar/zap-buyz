@@ -6,9 +6,9 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-// IMPORTANT: Replace with your secret key.
-// In a real application, use environment variables for this!
+// Your secret key is now securely loaded from the .env file
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 
 // Middleware to allow your React app to talk to this server
@@ -26,12 +26,12 @@ app.post('/create-checkout-session', async (req, res) => {
     const line_items = items.map(item => {
       return {
         price_data: {
-          currency: 'usd',
+          currency: 'gbp', // <-- CURRENCY IS SET TO POUNDS
           product_data: {
             name: item.name,
             images: [item.image],
           },
-          unit_amount: Math.round(item.price * 100), // Price in cents
+          unit_amount: Math.round(item.price * 100), // Price in pence
         },
         quantity: item.quantity,
       };
@@ -43,8 +43,8 @@ app.post('/create-checkout-session', async (req, res) => {
       line_items: line_items,
       mode: 'payment',
       // IMPORTANT: Replace these with your live website's URLs
-      success_url: `https://seven17.netlify.app//success`, // A page to show on successful payment
-      cancel_url: `https://seven17.netlify.app//cancel`,   // A page to show if the user cancels
+      success_url: `https://YOUR_WEBSITE_URL/success`, // A page to show on successful payment
+      cancel_url: `https://YOUR_WEBSITE_URL/cancel`,   // A page to show if the user cancels
     });
 
     // Send the session ID back to the React app
