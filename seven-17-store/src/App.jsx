@@ -181,7 +181,6 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false); // NEW: Track if initial auth check is done
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
