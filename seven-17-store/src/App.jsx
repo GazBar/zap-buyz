@@ -223,9 +223,13 @@ export default function App() {
                 }
                 setCurrentPage("success");
                 setCart([]);
+                 // Clean up the URL
+                window.history.replaceState(null, '', window.location.pathname);
             }
             if (query.get("canceled")) {
                 setCurrentPage("cancel");
+                 // Clean up the URL
+                window.history.replaceState(null, '', window.location.pathname);
             }
         };
 
