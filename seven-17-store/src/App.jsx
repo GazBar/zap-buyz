@@ -60,7 +60,6 @@ const ContactPage = ({ setModal }) => { const [name, setName] = useState(''); co
 const AuthPage = ({ setCurrentPage, setModal }) => { const [isLogin, setIsLogin] = useState(true); const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [name, setName] = useState(''); const handleSubmit = async (e) => { e.preventDefault(); try { if (isLogin) { await signInWithEmailAndPassword(auth, email, password); setModal({ title: 'Success!', message: 'You are now logged in.' }); setCurrentPage('home'); } else { const userCredential = await createUserWithEmailAndPassword(auth, email, password); await setDoc(doc(db, "users", userCredential.user.uid), { name: name, email: email, isAdmin: false }); setModal({ title: 'Success!', message: 'Your account has been created.' }); setCurrentPage('home'); } } catch (error) { setModal({ title: 'Authentication Error', message: error.message }); } }; return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-md sm:p-6 lg:p-8"><div className="p-8 bg-white rounded-lg shadow-lg"><h2 className="mb-6 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{isLogin ? 'Welcome Back!' : 'Create an Account'}</h2><form onSubmit={handleSubmit} className="space-y-6">{!isLogin && ( <div><label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div> )}<div><label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div><div><label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div><div><button type="submit" className="flex items-center justify-center w-full px-4 py-3 font-semibold text-gray-900 transition-colors duration-200 bg-lime-500 border border-transparent rounded-md shadow-sm hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500">{isLogin ? 'Log In' : 'Sign Up'}</button></div></form><p className="mt-4 text-sm text-center"><button onClick={() => setIsLogin(!isLogin)} className="font-medium text-lime-600 hover:text-lime-500">{isLogin ? 'Need an account? Sign up' : 'Already have an account? Log in'}</button></p></div></motion.div> ); };
 const AdminPage = ({ user }) => { const [messages, setMessages] = useState([]); const [loading, setLoading] = useState(true); useEffect(() => { const fetchMessages = async () => { try { const messagesQuery = query(collection(db, "messages"), orderBy("createdAt", "desc")); const querySnapshot = await getDocs(messagesQuery); const messagesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); setMessages(messagesData); } catch (error) { console.error("Error fetching messages: ", error); } finally { setLoading(false); } }; fetchMessages(); }, []); if (loading) { return <div className="text-center p-10">Loading messages...</div>; } return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="p-8 bg-white rounded-lg shadow-lg"><h2 className="mb-6 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Admin Panel: Messages</h2><div className="space-y-4">{messages.length > 0 ? ( messages.map(msg => ( <div key={msg.id} className="p-4 border rounded-md bg-gray-50"><div className="flex justify-between items-start"><div><p className="font-semibold">{msg.name} <span className="font-normal text-gray-500">- {msg.email}</span></p><p className="mt-2 text-gray-700">{msg.message}</p></div><a href={`https://mail.google.com/mail/?view=cm&fs=1&to=${msg.email}&su=Re: Your message to Seven 17`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-1 text-sm font-semibold text-white bg-lime-500 rounded-md hover:bg-lime-600 transition-colors"><Mail className="w-4 h-4 mr-2"/> Reply</a></div><p className="mt-2 text-xs text-gray-400">Received: {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleString() : 'No date'}</p></div> )) ) : ( <p>No messages yet.</p> )}</div></div></motion.div> ); };
 
-// --- NEW: ACCOUNT MANAGEMENT PAGE ---
 const AccountPage = ({ user, setModal, setCurrentPage }) => {
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
@@ -182,6 +181,7 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [authChecked, setAuthChecked] = useState(false); // NEW: Track if initial auth check is done
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
@@ -200,6 +200,7 @@ export default function App() {
             } else {
                 setIsAdmin(false);
             }
+            setAuthChecked(true); // Signal that the auth check is complete
         });
         return () => unsubscribe();
     }, []);
@@ -207,13 +208,13 @@ export default function App() {
     useEffect(() => {
         const handleSuccessfulCheckout = async () => {
             const query = new URLSearchParams(window.location.search);
-            if (query.get("success")) {
+            if (query.get("success") && authChecked) { // Only run if auth is checked
                 const storedCart = localStorage.getItem('cartForCheckout');
-                if (storedCart && auth.currentUser) {
+                if (storedCart && user) { // Use the user state, not auth.currentUser
                     const cartItems = JSON.parse(storedCart);
                     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
                     await addDoc(collection(db, "orders"), {
-                        userId: auth.currentUser.uid,
+                        userId: user.uid,
                         items: cartItems,
                         total: total,
                         createdAt: serverTimestamp()
@@ -227,8 +228,11 @@ export default function App() {
                 setCurrentPage("cancel");
             }
         };
-        handleSuccessfulCheckout();
-    }, []);
+
+        if(authChecked) { // Ensure this effect only runs after the initial auth check
+             handleSuccessfulCheckout();
+        }
+    }, [authChecked, user]); // Add dependencies
 
     const addToCart = (product) => {
         setCart((prevCart) => {
@@ -248,7 +252,9 @@ export default function App() {
 
     const handleCheckout = async () => {
         if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; }
-        localStorage.setItem('cartForCheckout', JSON.stringify(cart)); // Save cart before redirect
+        if (user) { // Only save to local storage if a user is logged in
+             localStorage.setItem('cartForCheckout', JSON.stringify(cart));
+        }
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
         const response = await fetch('https://seven-17.onrender.com/create-checkout-session', {
             method: 'POST',
