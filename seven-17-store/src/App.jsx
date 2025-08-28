@@ -206,7 +206,9 @@ const AdminPage = () => {
                                         <p className="mt-2 text-gray-700">{msg.message}</p>
                                     </div>
                                     <a 
-                                      href={`mailto:${msg.email}?subject=Re: Your message to Seven 17`}
+                                      href={`https://mail.google.com/mail/?view=cm&fs=1&to=${msg.email}&su=Re: Your message to Seven 17`}
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
                                       className="flex items-center px-3 py-1 text-sm font-semibold text-white bg-lime-500 rounded-md hover:bg-lime-600 transition-colors"
                                     >
                                       <Mail className="w-4 h-4 mr-2"/> Reply
@@ -355,7 +357,11 @@ export default function App() {
                 </div>
             </header>
             
-            <main className="py-8"><AnimatePresence mode="wait">{renderPage()}</AnimatePresence></main>
+            <main className="py-8">
+                <AnimatePresence mode="wait">
+                    {renderPage()}
+                </AnimatePresence>
+            </main>
 
             <AnimatePresence>
                 {isCartOpen && (
