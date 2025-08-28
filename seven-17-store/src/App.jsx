@@ -195,6 +195,7 @@ export default function App() {
             case 'product': return <ProductDetailPage {...props} />;
             case 'login': return <AuthPage {...props} />; // NEW
             case 'account': return <AccountPage {...props} />; // NEW
+            case 'contact': return <ContactPage {...props} />; // ADDED CONTACT PAGE
             case 'success': return <CheckoutResultPage success {...props} />;
             case 'cancel': return <CheckoutResultPage {...props} />;
             default: return <HomePage {...props} />;
@@ -220,6 +221,7 @@ export default function App() {
                     <nav className="hidden lg:flex lg:space-x-8">
                         <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('home')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Home</a>
                         <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('products')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Products</a>
+                        <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('contact')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Contact</a>
                     </nav>
                     <div className="flex items-center space-x-4">
                         {user ? (
