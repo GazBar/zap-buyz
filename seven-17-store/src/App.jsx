@@ -14,13 +14,13 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // --- FIREBASE SETUP ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -57,12 +57,26 @@ const ProductsPage = ({ setSelectedProduct, setCurrentPage, addToCart }) => ( <m
 const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart }) => ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8"><div className="flex flex-col lg:flex-row lg:space-x-8"><div className="w-full lg:w-1/2"><img src={selectedProduct.image} alt={selectedProduct.name} className="object-cover w-full rounded-lg shadow-xl" /></div><div className="w-full mt-8 lg:w-1/2 lg:mt-0"><div className="pb-6 border-b border-gray-200"><h1 className="text-4xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{selectedProduct.name}</h1><div className="flex items-center mt-2 space-x-2 text-lime-400">{Array.from({ length: 5 }, (_, i) => (<Star key={i} className={`w-5 h-5 ${i < Math.floor(selectedProduct.rating) ? 'fill-current' : 'text-gray-300'}`} />))}<span className="text-lg font-semibold text-gray-600 ml-2">{selectedProduct.rating}</span><span className="text-sm text-gray-500">({selectedProduct.reviews} reviews)</span></div><p className="mt-4 text-3xl font-bold text-gray-900">£{selectedProduct.price.toFixed(2)}</p></div><div className="mt-6"><h2 className="text-xl font-semibold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Product Description</h2><p className="mt-2 text-gray-600">{selectedProduct.description}</p></div><div className="flex items-center mt-8 space-x-4"><button onClick={() => addToCart(selectedProduct)} className="flex-1 px-6 py-3 text-lg font-semibold text-gray-900 transition-all duration-300 bg-lime-500 rounded-md shadow-md hover:bg-lime-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"><span className="flex items-center justify-center space-x-2"><ShoppingCart className="w-5 h-5" /><span>Add to Cart</span></span></button><button className="p-3 text-gray-600 transition-colors duration-200 bg-gray-100 rounded-md hover:bg-gray-200" aria-label="Add to wishlist"><Heart className="w-6 h-6" /></button></div><button onClick={() => setCurrentPage('products')} className="flex items-center mt-8 text-lime-600 transition-colors duration-200 hover:text-lime-800"><ChevronLeft className="w-4 h-4 mr-2" /> Back to Products</button></div></div></motion.div> );
 const CheckoutResultPage = ({ success, setCurrentPage }) => ( <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center"><div className="p-8 bg-white rounded-lg shadow-lg">{success ? <CheckCircle className="w-16 h-16 mx-auto text-green-500" /> : <XCircle className="w-16 h-16 mx-auto text-red-500" />}<h2 className="mt-4 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{success ? 'Payment Successful!' : 'Payment Canceled'}</h2><p className="mt-2 text-gray-600">{success ? "Thank you for your purchase." : "Your order was canceled."}</p><button onClick={() => setCurrentPage('products')} className="px-6 py-3 mt-8 font-semibold text-white transition-transform duration-200 bg-lime-500 rounded-md shadow-lg hover:bg-lime-600 hover:scale-105">Continue Shopping</button></div></motion.div> );
 
-// --- NEW: CONTACT PAGE (RE-ADDED) ---
 const ContactPage = ({ setModal }) => {
-    const handleSubmit = (e) => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setModal({ title: 'Message Sent!', message: "Thanks for reaching out. We'll get back to you soon." });
-        e.target.reset();
+        try {
+            await addDoc(collection(db, "messages"), {
+                name: name,
+                email: email,
+                message: message,
+                createdAt: serverTimestamp()
+            });
+            setModal({ title: 'Message Sent!', message: "Thanks for reaching out. We'll get back to you soon." });
+            setName(''); setEmail(''); setMessage('');
+        } catch (error) {
+            setModal({ title: 'Error', message: 'Could not send message. Please try again.' });
+            console.error("Error adding document: ", error);
+        }
     };
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8">
@@ -70,17 +84,15 @@ const ContactPage = ({ setModal }) => {
           <h2 className="mb-2 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Contact Us</h2>
           <p className="mb-8 text-center text-gray-600">Have a question or feedback? Drop us a line!</p>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div><label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" id="name" name="name" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
-            <div><label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label><input type="email" id="email" name="email" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
-            <div><label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label><textarea id="message" name="message" rows="4" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm"></textarea></div>
+            <div><label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
+            <div><label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
+            <div><label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label><textarea value={message} onChange={(e) => setMessage(e.target.value)} rows="4" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm"></textarea></div>
             <div><button type="submit" className="flex items-center justify-center w-full px-4 py-3 font-semibold text-gray-900 transition-colors duration-200 bg-lime-500 border border-transparent rounded-md shadow-sm hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500"><Send className="w-5 h-5 mr-2" />Send Message</button></div>
           </form>
         </div>
       </motion.div>
     );
 };
-
-// --- AUTHENTICATION PAGES ---
 
 const AuthPage = ({ setCurrentPage, setModal }) => {
     const [isLogin, setIsLogin] = useState(true);
@@ -97,7 +109,7 @@ const AuthPage = ({ setCurrentPage, setModal }) => {
                 setCurrentPage('home');
             } else {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), { name: name, email: email });
+                await setDoc(doc(db, "users", userCredential.user.uid), { name: name, email: email, isAdmin: false }); // Default isAdmin to false
                 setModal({ title: 'Success!', message: 'Your account has been created.' });
                 setCurrentPage('home');
             }
@@ -155,10 +167,61 @@ const AccountPage = ({ user, setCurrentPage, setModal }) => {
     );
 }
 
+// --- NEW: ADMIN PAGE ---
+const AdminPage = () => {
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const messagesQuery = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(messagesQuery);
+                const messagesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMessages(messagesData);
+            } catch (error) {
+                console.error("Error fetching messages: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMessages();
+    }, []);
+
+    if (loading) {
+        return <div className="text-center p-10">Loading messages...</div>;
+    }
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8">
+            <div className="p-8 bg-white rounded-lg shadow-lg">
+                <h2 className="mb-6 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Admin Panel: Messages</h2>
+                <div className="space-y-4">
+                    {messages.length > 0 ? (
+                        messages.map(msg => (
+                            <div key={msg.id} className="p-4 border rounded-md bg-gray-50">
+                                <p className="font-semibold">{msg.name} <span className="font-normal text-gray-500">- {msg.email}</span></p>
+                                <p className="mt-2 text-gray-700">{msg.message}</p>
+                                <p className="mt-2 text-xs text-gray-400">
+                                    Received: {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleString() : 'No date'}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No messages yet.</p>
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+
 // --- MAIN APP COMPONENT ---
 
 export default function App() {
-    const [user, setUser] = useState(null); // NEW: User state
+    const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false); // NEW: Admin state
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
@@ -168,10 +231,22 @@ export default function App() {
 
     // NEW: Firebase auth listener
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                // Check for admin status
+                const userDocRef = doc(db, "users", currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().isAdmin) {
+                    setIsAdmin(true);
+                } else {
+                    setIsAdmin(false);
+                }
+            } else {
+                setIsAdmin(false);
+            }
         });
-        return () => unsubscribe(); // Cleanup on unmount
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -219,6 +294,7 @@ export default function App() {
             case 'login': return <AuthPage {...props} />;
             case 'account': return <AccountPage {...props} />;
             case 'contact': return <ContactPage {...props} />;
+            case 'admin': return isAdmin ? <AdminPage /> : <HomePage {...props} />; // Protected Admin Page
             case 'success': return <CheckoutResultPage success {...props} />;
             case 'cancel': return <CheckoutResultPage {...props} />;
             default: return <HomePage {...props} />;
@@ -245,6 +321,11 @@ export default function App() {
                         <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('home')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Home</a>
                         <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('products')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Products</a>
                         <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('contact')}} className="text-lg font-medium text-gray-700 transition-colors duration-200 hover:text-lime-500">Contact</a>
+                        {isAdmin && (
+                            <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('admin')}} className="flex items-center text-lg font-medium text-lime-600 transition-colors duration-200 hover:text-lime-500">
+                                <ShieldCheck className="w-5 h-5 mr-1" /> Admin
+                            </a>
+                        )}
                     </nav>
                     <div className="flex items-center space-x-4">
                         {user ? (
