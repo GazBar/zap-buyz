@@ -181,7 +181,6 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false); // NEW: Track if initial auth check is done
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
@@ -189,54 +188,51 @@ export default function App() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [modal, setModal] = useState(null);
 
+    // UNIFIED EFFECT FOR AUTH AND CHECKOUT REDIRECT
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
                 const userDocRef = doc(db, "users", currentUser.uid);
                 const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists() && userDoc.data().isAdmin) { setIsAdmin(true); } 
-                else { setIsAdmin(false); }
+                setIsAdmin(userDoc.exists() && userDoc.data().isAdmin);
+
+                // NOW, PROCESS CHECKOUT RESULT SINCE WE KNOW THE USER'S STATUS
+                const query = new URLSearchParams(window.location.search);
+                if (query.get("success")) {
+                    const storedCart = localStorage.getItem('cartForCheckout');
+                    if (storedCart) {
+                        const cartItems = JSON.parse(storedCart);
+                        const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                        try {
+                            await addDoc(collection(db, "orders"), {
+                                userId: currentUser.uid,
+                                items: cartItems,
+                                total: total,
+                                createdAt: serverTimestamp()
+                            });
+                            localStorage.removeItem('cartForCheckout');
+                        } catch (error) {
+                            console.error("Failed to save order:", error);
+                        }
+                    }
+                    setCurrentPage("success");
+                    setCart([]);
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
             } else {
                 setIsAdmin(false);
             }
-            setAuthChecked(true); // Signal that the auth check is complete
-        });
-        return () => unsubscribe();
-    }, []);
 
-    useEffect(() => {
-        const handleSuccessfulCheckout = async () => {
+            // Handle cancel for both logged-in and guest users
             const query = new URLSearchParams(window.location.search);
-            if (query.get("success") && authChecked) { // Only run if auth is checked
-                const storedCart = localStorage.getItem('cartForCheckout');
-                if (storedCart && user) { // Use the user state, not auth.currentUser
-                    const cartItems = JSON.parse(storedCart);
-                    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    await addDoc(collection(db, "orders"), {
-                        userId: user.uid,
-                        items: cartItems,
-                        total: total,
-                        createdAt: serverTimestamp()
-                    });
-                    localStorage.removeItem('cartForCheckout');
-                }
-                setCurrentPage("success");
-                setCart([]);
-                 // Clean up the URL
-                window.history.replaceState(null, '', window.location.pathname);
-            }
             if (query.get("canceled")) {
                 setCurrentPage("cancel");
-                 // Clean up the URL
                 window.history.replaceState(null, '', window.location.pathname);
             }
-        };
-
-        if(authChecked) { // Ensure this effect only runs after the initial auth check
-             handleSuccessfulCheckout();
-        }
-    }, [authChecked, user]); // Add dependencies
+        });
+        return () => unsubscribe();
+    }, []); // This effect runs only once on mount
 
     const addToCart = (product) => {
         setCart((prevCart) => {
