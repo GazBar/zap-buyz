@@ -257,7 +257,7 @@ export default function App() {
             return;
         }
         // IMPORTANT: Replace with your publishable key.
-        const stripe = window.Stripe('YOUR_PUBLISHABLE_KEY_HERE');
+        const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
         
         const response = await fetch('http://localhost:4242/create-checkout-session', {
             method: 'POST',
