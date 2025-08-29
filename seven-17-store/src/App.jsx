@@ -271,7 +271,7 @@ export default function App() {
              localStorage.setItem('cartForCheckout', JSON.stringify(cart));
         }
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
-        const response = await fetch('http://localhost:4242/create-checkout-session', { ... });
+        const response = await fetch('http://localhost:4242/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart }),
