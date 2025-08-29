@@ -181,6 +181,7 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [authChecked, setAuthChecked] = useState(false); // NEW: Track if initial auth check is done
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
@@ -188,7 +189,7 @@ export default function App() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [modal, setModal] = useState(null);
 
-    // UNIFIED EFFECT FOR AUTH AND CHECKOUT REDIRECT
+    // Effect for handling authentication state
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -196,43 +197,54 @@ export default function App() {
                 const userDocRef = doc(db, "users", currentUser.uid);
                 const userDoc = await getDoc(userDocRef);
                 setIsAdmin(userDoc.exists() && userDoc.data().isAdmin);
-
-                // NOW, PROCESS CHECKOUT RESULT SINCE WE KNOW THE USER'S STATUS
-                const query = new URLSearchParams(window.location.search);
-                if (query.get("success")) {
-                    const storedCart = localStorage.getItem('cartForCheckout');
-                    if (storedCart) {
-                        const cartItems = JSON.parse(storedCart);
-                        const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                        try {
-                            await addDoc(collection(db, "orders"), {
-                                userId: currentUser.uid,
-                                items: cartItems,
-                                total: total,
-                                createdAt: serverTimestamp()
-                            });
-                            localStorage.removeItem('cartForCheckout');
-                        } catch (error) {
-                            console.error("Failed to save order:", error);
-                        }
-                    }
-                    setCurrentPage("success");
-                    setCart([]);
-                    window.history.replaceState(null, '', window.location.pathname);
-                }
             } else {
                 setIsAdmin(false);
             }
-
-            // Handle cancel for both logged-in and guest users
-            const query = new URLSearchParams(window.location.search);
-            if (query.get("canceled")) {
-                setCurrentPage("cancel");
-                window.history.replaceState(null, '', window.location.pathname);
-            }
+            setAuthChecked(true); // Mark that the initial check is complete
         });
         return () => unsubscribe();
-    }, []); // This effect runs only once on mount
+    }, []);
+
+    // Effect for handling checkout redirects, depends on auth being checked
+    useEffect(() => {
+        if (!authChecked) return; // Wait for initial auth check
+
+        const query = new URLSearchParams(window.location.search);
+        const handleSuccessfulCheckout = async () => {
+            if (user) {
+                const storedCart = localStorage.getItem('cartForCheckout');
+                if (storedCart) {
+                    const cartItems = JSON.parse(storedCart);
+                    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    try {
+                        await addDoc(collection(db, "orders"), {
+                            userId: user.uid,
+                            items: cartItems,
+                            total: total,
+                            createdAt: serverTimestamp()
+                        });
+                        localStorage.removeItem('cartForCheckout');
+                    } catch (error) {
+                        console.error("Failed to save order:", error);
+                    }
+                }
+            }
+            setCurrentPage("success");
+            setCart([]);
+            window.history.replaceState(null, '', window.location.pathname);
+        };
+
+        if (query.get("success")) {
+            handleSuccessfulCheckout();
+        }
+        
+        if (query.get("canceled")) {
+            setCurrentPage("cancel");
+            localStorage.removeItem('cartForCheckout');
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+    }, [authChecked, user]); // Rerun when auth status is confirmed or user changes
+
 
     const addToCart = (product) => {
         setCart((prevCart) => {
@@ -256,7 +268,7 @@ export default function App() {
              localStorage.setItem('cartForCheckout', JSON.stringify(cart));
         }
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
-        const response = await fetch('https://seven-17.onrender.com/create-checkout-session', {
+        const response = await fetch('https://seven-17-server.onrender.com/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart }),
@@ -349,3 +361,4 @@ export default function App() {
         </div>
     );
 }
+
