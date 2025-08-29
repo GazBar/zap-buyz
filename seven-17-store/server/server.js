@@ -5,30 +5,17 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// --- IMPORTANT: CORS CONFIGURATION ---
-// This tells your server to only accept requests from your live website.
-const allowedOrigins = ['https://seven17.netlify.app', 'http://localhost:3000'];
+// --- IMPORTANT: SIMPLIFIED CORS CONFIGURATION FOR DIAGNOSTICS ---
+// This temporarily allows requests from any origin.
+app.use(cors()); 
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-};
-
-app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- ROUTES ---
-// This is a test route to make sure the server is running
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });
 
-// This is the route that creates the checkout session
 app.post('/create-checkout-session', async (req, res) => {
   const { items } = req.body;
 
@@ -39,7 +26,7 @@ app.post('/create-checkout-session', async (req, res) => {
         name: item.name,
         images: [item.image],
       },
-      unit_amount: Math.round(item.price * 100), // Price in pence
+      unit_amount: Math.round(item.price * 100),
     },
     quantity: item.quantity,
   }));
