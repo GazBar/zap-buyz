@@ -271,12 +271,18 @@ export default function App() {
              localStorage.setItem('cartForCheckout', JSON.stringify(cart));
         }
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
+        
         const response = await fetch('http://localhost:4242/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart }),
         });
-        if (!response.ok) { setModal({ title: 'Server Error', message: 'Could not connect to the server.' }); return; }
+
+        if (!response.ok) { 
+            setModal({ title: 'Server Error', message: 'Could not connect to the server. Is it running?' });
+            return; 
+        }
+
         const session = await response.json();
         const result = await stripe.redirectToCheckout({ sessionId: session.id });
         if (result.error) { 
