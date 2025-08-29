@@ -181,7 +181,7 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false); // NEW: Track if initial auth check is done
+    const [authChecked, setAuthChecked] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [cart, setCart] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
@@ -205,14 +205,12 @@ export default function App() {
         return () => unsubscribe();
     }, []);
 
-    // Effect for handling checkout redirects, depends on auth being checked
+    // Effect for handling checkout redirects
     useEffect(() => {
-        if (!authChecked) return; // Wait for initial auth check
+        const processCheckout = async () => {
+            const query = new URLSearchParams(window.location.search);
 
-        const query = new URLSearchParams(window.location.search);
-        const handleSuccessfulCheckout = async () => {
-            // User state is guaranteed to be correct here because of the authChecked dependency
-            if (user) {
+            if (query.get("success") && user) {
                 const storedCart = localStorage.getItem('cartForCheckout');
                 if (storedCart) {
                     const cartItems = JSON.parse(storedCart);
@@ -229,23 +227,22 @@ export default function App() {
                         console.error("Failed to save order:", error);
                     }
                 }
+                setCurrentPage("success");
+                setCart([]);
+                window.history.replaceState(null, '', window.location.pathname);
             }
-            setCurrentPage("success");
-            setCart([]);
-            // Clean the URL
-            window.history.replaceState(null, '', window.location.pathname);
+            
+            if (query.get("canceled")) {
+                setCurrentPage("cancel");
+                localStorage.removeItem('cartForCheckout');
+                window.history.replaceState(null, '', window.location.pathname);
+            }
         };
 
-        if (query.get("success")) {
-            handleSuccessfulCheckout();
+        if (authChecked) { // Only run this logic AFTER the initial auth check
+            processCheckout();
         }
-        
-        if (query.get("canceled")) {
-            setCurrentPage("cancel");
-            localStorage.removeItem('cartForCheckout');
-            window.history.replaceState(null, '', window.location.pathname);
-        }
-    }, [authChecked, user]); // Rerun when auth status is confirmed OR user object changes
+    }, [authChecked, user]);
 
 
     const addToCart = (product) => {
@@ -266,10 +263,11 @@ export default function App() {
 
     const handleCheckout = async () => {
         if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; }
-        // Save cart to local storage right before redirecting
+        
         if (user) {
              localStorage.setItem('cartForCheckout', JSON.stringify(cart));
         }
+
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
         
         const response = await fetch('http://localhost:4242/create-checkout-session', {
@@ -287,7 +285,7 @@ export default function App() {
         const result = await stripe.redirectToCheckout({ sessionId: session.id });
         if (result.error) { 
             setModal({ title: 'Checkout Error', message: result.error.message });
-            localStorage.removeItem('cartForCheckout'); // Clean up on error
+            localStorage.removeItem('cartForCheckout');
         }
     };
 
