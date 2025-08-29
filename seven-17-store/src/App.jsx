@@ -349,6 +349,32 @@ export default function App() {
                 </div>
             </header>
             
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl lg:hidden">
+                        <div className="flex items-center justify-between p-4 border-b">
+                             <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('home')}} className="flex items-center space-x-2 text-xl font-extrabold text-gray-900">
+                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12L12 4L20 12L12 20L4 12Z" stroke="#A3E635" strokeWidth="2" strokeLinejoin="round"/><path d="M12 4L20 12L12 20" stroke="#4D7C0F" strokeWidth="2" strokeLinejoin="round"/></svg>
+                               <span>Seven 17</span>
+                            </a>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-gray-100">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <nav className="p-4">
+                            <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('home'); setIsMobileMenuOpen(false);}} className="block px-4 py-2 text-lg font-medium text-gray-700 rounded-md hover:bg-gray-100">Home</a>
+                            <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('products'); setIsMobileMenuOpen(false);}} className="block px-4 py-2 mt-1 text-lg font-medium text-gray-700 rounded-md hover:bg-gray-100">Products</a>
+                            <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('contact'); setIsMobileMenuOpen(false);}} className="block px-4 py-2 mt-1 text-lg font-medium text-gray-700 rounded-md hover:bg-gray-100">Contact</a>
+                            {isAdmin && (
+                                <a href="#" onClick={(e) => {e.preventDefault(); setCurrentPage('admin'); setIsMobileMenuOpen(false);}} className="flex items-center px-4 py-2 mt-1 text-lg font-medium text-lime-600 rounded-md hover:bg-gray-100">
+                                    <ShieldCheck className="w-5 h-5 mr-2" /> Admin
+                                </a>
+                            )}
+                        </nav>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <main className="py-8">
                 <AnimatePresence mode="wait">
                     {renderPage()}
