@@ -29,7 +29,7 @@ const firebaseConfig = {
   projectId: "project-874572623708435649",
   storageBucket: "project-874572623708435649.appspot.com",
   messagingSenderId: "958867677764",
-  appId: "1:958867677764:web:8355dfe82724e9818bd211",
+  appId: "1:958867677764:web:8355dfe824e9818bd211",
   measurementId: "G-T3QE64GYQH"
 };
 
@@ -211,6 +211,7 @@ export default function App() {
 
         const query = new URLSearchParams(window.location.search);
         const handleSuccessfulCheckout = async () => {
+            // User state is guaranteed to be correct here because of the authChecked dependency
             if (user) {
                 const storedCart = localStorage.getItem('cartForCheckout');
                 if (storedCart) {
@@ -231,6 +232,7 @@ export default function App() {
             }
             setCurrentPage("success");
             setCart([]);
+            // Clean the URL
             window.history.replaceState(null, '', window.location.pathname);
         };
 
@@ -243,7 +245,7 @@ export default function App() {
             localStorage.removeItem('cartForCheckout');
             window.history.replaceState(null, '', window.location.pathname);
         }
-    }, [authChecked, user]); // Rerun when auth status is confirmed or user changes
+    }, [authChecked, user]); // Rerun when auth status is confirmed OR user object changes
 
 
     const addToCart = (product) => {
@@ -264,7 +266,8 @@ export default function App() {
 
     const handleCheckout = async () => {
         if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; }
-        if (user) { // Only save to local storage if a user is logged in
+        // Save cart to local storage right before redirecting
+        if (user) {
              localStorage.setItem('cartForCheckout', JSON.stringify(cart));
         }
         const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3');
@@ -276,7 +279,10 @@ export default function App() {
         if (!response.ok) { setModal({ title: 'Server Error', message: 'Could not connect to the server.' }); return; }
         const session = await response.json();
         const result = await stripe.redirectToCheckout({ sessionId: session.id });
-        if (result.error) { setModal({ title: 'Checkout Error', message: result.error.message }); }
+        if (result.error) { 
+            setModal({ title: 'Checkout Error', message: result.error.message });
+            localStorage.removeItem('cartForCheckout'); // Clean up on error
+        }
     };
 
     const renderPage = () => {
