@@ -200,7 +200,7 @@ export default function App() {
             } else {
                 setIsAdmin(false);
             }
-            setAuthChecked(true); // Mark that the initial check is complete
+            setAuthChecked(true);
         });
         return () => unsubscribe();
     }, []);
@@ -239,7 +239,7 @@ export default function App() {
             }
         };
 
-        if (authChecked) { // Only run this logic AFTER the initial auth check
+        if (authChecked) { 
             processCheckout();
         }
     }, [authChecked, user]);
