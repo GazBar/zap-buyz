@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail, Package, Settings } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail, Package, Settings, Sun, Leaf, Snowflake, Flower } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // --- FIREBASE SETUP ---
@@ -42,18 +42,78 @@ const db = getFirestore(app);
 
 // --- MOCK DATA ---
 const productsData = [
-  { id: 1, name: 'Elegant Gold Necklace', description: 'A beautiful gold-plated necklace.', price: 39.99, image: 'https://placehold.co/600x400/171717/ffffff?text=Product+1', rating: 4.8, reviews: 120 },
-  { id: 2, name: 'Minimalist Leather Wallet', description: 'Slim and stylish genuine leather wallet.', price: 24.50, image: 'https://placehold.co/600x400/262626/ffffff?text=Product+2', rating: 4.5, reviews: 85 },
-  { id: 3, name: 'Smart Watch Pro', description: 'Feature-rich smart watch with a vibrant display.', price: 199.00, image: 'https://placehold.co/600x400/404040/ffffff?text=Product+3', rating: 4.9, reviews: 250 },
-  { id: 4, name: 'Ceramic Coffee Mug Set', description: 'A set of four handcrafted ceramic mugs.', price: 29.99, image: 'https://placehold.co/600x400/525252/ffffff?text=Product+4', rating: 4.7, reviews: 95 },
+  { id: 1, name: 'Sun Hat', description: 'Stylish and protective for sunny days.', price: 25.00, image: 'https://placehold.co/600x400/FDB813/ffffff?text=Sun+Hat', rating: 4.8, reviews: 150, category: 'Summer' },
+  { id: 2, name: 'Beach Towel', description: 'Large, absorbent, and quick-drying.', price: 30.00, image: 'https://placehold.co/600x400/4682B4/ffffff?text=Beach+Towel', rating: 4.7, reviews: 120, category: 'Summer' },
+  { id: 3, name: 'Cozy Knit Scarf', description: 'Warm and fashionable for crisp autumn air.', price: 35.00, image: 'https://placehold.co/600x400/D2691E/ffffff?text=Knit+Scarf', rating: 4.9, reviews: 200, category: 'Autumn' },
+  { id: 4, name: 'Pumpkin Spice Candle', description: 'Fill your home with the scent of autumn.', price: 20.00, image: 'https://placehold.co/600x400/FF7F50/ffffff?text=Candle', rating: 4.8, reviews: 300, category: 'Autumn' },
+  { id: 5, name: 'Insulated Winter Jacket', description: 'Stay warm and dry in the coldest weather.', price: 150.00, image: 'https://placehold.co/600x400/00008B/ffffff?text=Jacket', rating: 4.9, reviews: 250, category: 'Winter' },
+  { id: 6, name: 'Thermal Gloves', description: 'Keep your hands toasty on frosty mornings.', price: 40.00, image: 'https://placehold.co/600x400/2F4F4F/ffffff?text=Gloves', rating: 4.7, reviews: 180, category: 'Winter' },
+  { id: 7, name: 'Floral Print Dress', description: 'A light and airy dress for spring.', price: 55.00, image: 'https://placehold.co/600x400/FFB6C1/ffffff?text=Dress', rating: 4.6, reviews: 90, category: 'Spring' },
+  { id: 8, name: 'Watering Can', description: 'Perfect for your spring garden.', price: 22.50, image: 'https://placehold.co/600x400/3CB371/ffffff?text=Watering+Can', rating: 4.5, reviews: 75, category: 'Spring' },
 ];
 
 // --- HELPER & PAGE COMPONENTS (Styling from Volt Theme) ---
 
 const Modal = ({ title, message, onClose }) => ( <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-80"><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-sm p-6 bg-white rounded-lg shadow-2xl text-center"><h3 className="mb-2 text-2xl font-bold text-gray-800">{title}</h3><p className="mb-4 text-gray-600">{message}</p><button onClick={onClose} className="w-full px-4 py-2 font-semibold text-white transition-all duration-300 bg-lime-500 rounded-md hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2">OK</button></motion.div></div> );
-const ProductCard = ({ product, onViewProduct, onAddToCart }) => ( <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="overflow-hidden bg-white rounded-lg shadow-md group transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1"><div className="relative overflow-hidden cursor-pointer h-60" onClick={() => onViewProduct(product)}><img src={product.image} alt={product.name} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" /></div><div className="p-4 flex flex-col flex-grow"><h3 className="text-lg font-semibold text-gray-800">{product.name}</h3><p className="mt-1 text-sm text-gray-500 truncate flex-grow">{product.description}</p><div className="flex items-center justify-between mt-2"><p className="text-xl font-bold text-gray-900">£{product.price.toFixed(2)}</p><div className="flex items-center text-sm text-gray-500"><Star className="w-4 h-4 mr-1 text-lime-400 fill-current" /><span>{product.rating} ({product.reviews})</span></div></div><div className="flex items-center justify-between mt-4 space-x-2"><button onClick={() => onViewProduct(product)} className="flex-1 px-4 py-2 text-sm font-semibold text-lime-600 transition-colors duration-200 bg-lime-50 rounded-md hover:bg-lime-100">View Details</button><button onClick={() => onAddToCart(product)} className="p-2 text-white transition-all duration-300 bg-lime-500 rounded-md hover:bg-lime-600 transform group-hover:scale-110" aria-label="Add to cart"><ShoppingCart className="w-5 h-5" /></button></div></div></motion.div> );
+const ProductCard = ({ product, onViewProduct, onAddToCart }) => ( <motion.div layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="overflow-hidden bg-white rounded-lg shadow-md group transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1"><div className="relative overflow-hidden cursor-pointer h-60" onClick={() => onViewProduct(product)}><img src={product.image} alt={product.name} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" /></div><div className="p-4 flex flex-col flex-grow"><h3 className="text-lg font-semibold text-gray-800">{product.name}</h3><p className="mt-1 text-sm text-gray-500 truncate flex-grow">{product.description}</p><div className="flex items-center justify-between mt-2"><p className="text-xl font-bold text-gray-900">£{product.price.toFixed(2)}</p><div className="flex items-center text-sm text-gray-500"><Star className="w-4 h-4 mr-1 text-lime-400 fill-current" /><span>{product.rating} ({product.reviews})</span></div></div><div className="flex items-center justify-between mt-4 space-x-2"><button onClick={() => onViewProduct(product)} className="flex-1 px-4 py-2 text-sm font-semibold text-lime-600 transition-colors duration-200 bg-lime-50 rounded-md hover:bg-lime-100">View Details</button><button onClick={() => onAddToCart(product)} className="p-2 text-white transition-all duration-300 bg-lime-500 rounded-md hover:bg-lime-600 transform group-hover:scale-110" aria-label="Add to cart"><ShoppingCart className="w-5 h-5" /></button></div></div></motion.div> );
 const HomePage = ({ setCurrentPage, setSelectedProduct, addToCart }) => ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8"><div className="p-8 mb-8 text-center bg-gray-800 rounded-lg shadow-lg"><h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl" style={{ fontFamily: "'Poppins', sans-serif" }}>Welcome to Seven 17!</h2><p className="mt-4 text-xl text-gray-300">The fastest way to get the best products.</p><button onClick={() => setCurrentPage('products')} className="px-8 py-4 mt-8 font-bold text-gray-900 transition-all duration-300 transform bg-gradient-to-r from-lime-400 to-lime-500 rounded-md shadow-lg hover:shadow-lime-500/50 hover:scale-105">Shop Now</button></div><h3 className="mb-6 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Featured Products</h3><div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{productsData.slice(0, 4).map((product) => ( <ProductCard key={product.id} product={product} onViewProduct={(p) => { setSelectedProduct(p); setCurrentPage('product'); }} onAddToCart={addToCart} /> ))}</div></motion.div> );
-const ProductsPage = ({ setSelectedProduct, setCurrentPage, addToCart }) => ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8"><h2 className="mb-6 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>All Products</h2><div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{productsData.map((product) => ( <ProductCard key={product.id} product={product} onViewProduct={(p) => { setSelectedProduct(p); setCurrentPage('product'); }} onAddToCart={addToCart} /> ))}</div></motion.div> );
+
+const ProductsPage = ({ setSelectedProduct, setCurrentPage, addToCart }) => {
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [sortOption, setSortOption] = useState('default');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const categories = ['All', 'Spring', 'Summer', 'Autumn', 'Winter'];
+    const categoryIcons = { Spring: Flower, Summer: Sun, Autumn: Leaf, Winter: Snowflake };
+
+    const processedProducts = productsData
+        .filter(p => selectedCategory === 'All' || p.category === selectedCategory)
+        .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            switch (sortOption) {
+                case 'price-asc': return a.price - b.price;
+                case 'price-desc': return b.price - a.price;
+                case 'rating-desc': return b.rating - a.rating;
+                default: return 0;
+            }
+        });
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
+            <h2 className="mb-6 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>All Products</h2>
+            
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+                {categories.map(category => {
+                    const Icon = categoryIcons[category];
+                    return (
+                        <button key={category} onClick={() => setSelectedCategory(category)} className={`flex items-center px-4 py-2 text-sm sm:text-base font-semibold transition-all duration-300 rounded-md transform hover:scale-105 ${selectedCategory === category ? 'bg-lime-500 text-gray-900 shadow-lg' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                            {Icon && <Icon className="w-5 h-5 mr-2" />} {category}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+                <input type="text" placeholder="Search products..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500"/>
+                <select value={sortOption} onChange={e => setSortOption(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500">
+                    <option value="default">Default Sort</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="rating-desc">Rating: High to Low</option>
+                </select>
+            </div>
+
+            <AnimatePresence>
+                <motion.div layout className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {processedProducts.map((product) => (
+                        <ProductCard key={product.id} product={product} onViewProduct={(p) => { setSelectedProduct(p); setCurrentPage('product'); }} onAddToCart={addToCart} />
+                    ))}
+                </motion.div>
+            </AnimatePresence>
+        </motion.div>
+    );
+};
+
 const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart }) => ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8"><div className="flex flex-col lg:flex-row lg:space-x-8"><div className="w-full lg:w-1/2"><img src={selectedProduct.image} alt={selectedProduct.name} className="object-cover w-full rounded-lg shadow-xl" /></div><div className="w-full mt-8 lg:w-1/2 lg:mt-0"><div className="pb-6 border-b border-gray-200"><h1 className="text-4xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{selectedProduct.name}</h1><div className="flex items-center mt-2 space-x-2 text-lime-400">{Array.from({ length: 5 }, (_, i) => (<Star key={i} className={`w-5 h-5 ${i < Math.floor(selectedProduct.rating) ? 'fill-current' : 'text-gray-300'}`} />))}<span className="text-lg font-semibold text-gray-600 ml-2">{selectedProduct.rating}</span><span className="text-sm text-gray-500">({selectedProduct.reviews} reviews)</span></div><p className="mt-4 text-3xl font-bold text-gray-900">£{selectedProduct.price.toFixed(2)}</p></div><div className="mt-6"><h2 className="text-xl font-semibold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Product Description</h2><p className="mt-2 text-gray-600">{selectedProduct.description}</p></div><div className="flex items-center mt-8 space-x-4"><button onClick={() => addToCart(selectedProduct)} className="flex-1 px-6 py-3 text-lg font-semibold text-gray-900 transition-all duration-300 bg-lime-500 rounded-md shadow-md hover:bg-lime-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"><span className="flex items-center justify-center space-x-2"><ShoppingCart className="w-5 h-5" /><span>Add to Cart</span></span></button><button className="p-3 text-gray-600 transition-colors duration-200 bg-gray-100 rounded-md hover:bg-gray-200" aria-label="Add to wishlist"><Heart className="w-6 h-6" /></button></div><button onClick={() => setCurrentPage('products')} className="flex items-center mt-8 text-lime-600 transition-colors duration-200 hover:text-lime-800"><ChevronLeft className="w-4 h-4 mr-2" /> Back to Products</button></div></div></motion.div> );
 const CheckoutResultPage = ({ success, setCurrentPage }) => ( <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center"><div className="p-8 bg-white rounded-lg shadow-lg">{success ? <CheckCircle className="w-16 h-16 mx-auto text-green-500" /> : <XCircle className="w-16 h-16 mx-auto text-red-500" />}<h2 className="mt-4 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{success ? 'Payment Successful!' : 'Payment Canceled'}</h2><p className="mt-2 text-gray-600">{success ? "Thank you for your purchase." : "Your order was canceled."}</p><button onClick={() => setCurrentPage('products')} className="px-6 py-3 mt-8 font-semibold text-white transition-transform duration-200 bg-lime-500 rounded-md shadow-lg hover:bg-lime-600 hover:scale-105">Continue Shopping</button></div></motion.div> );
 const ContactPage = ({ setModal }) => { const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [message, setMessage] = useState(''); const handleSubmit = async (e) => { e.preventDefault(); try { await addDoc(collection(db, "messages"), { name: name, email: email, message: message, createdAt: serverTimestamp() }); setModal({ title: 'Message Sent!', message: "Thanks for reaching out. We'll get back to you soon." }); setName(''); setEmail(''); setMessage(''); } catch (error) { setModal({ title: 'Error', message: 'Could not send message. Please try again.' }); console.error("Error adding document: ", error); } }; return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8"><div className="p-8 bg-white rounded-lg shadow-lg"><h2 className="mb-2 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Contact Us</h2><p className="mb-8 text-center text-gray-600">Have a question or feedback? Drop us a line!</p><form onSubmit={handleSubmit} className="space-y-6"><div><label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div><div><label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div><div><label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label><textarea value={message} onChange={(e) => setMessage(e.target.value)} rows="4" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm"></textarea></div><div><button type="submit" className="flex items-center justify-center w-full px-4 py-3 font-semibold text-gray-900 transition-colors duration-200 bg-lime-500 border border-transparent rounded-md shadow-sm hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500"><Send className="w-5 h-5 mr-2" />Send Message</button></div></form></div></motion.div> ); };
