@@ -217,7 +217,9 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
     }, [fetchReviews]);
     
     useEffect(() => {
-        setSelectedImage(selectedProduct.images && selectedProduct.images[0] ? selectedProduct.images[0] : 'https://placehold.co/600x400/cccccc/ffffff?text=No+Image')
+        if (selectedProduct && selectedProduct.images && selectedProduct.images[0]) {
+            setSelectedImage(selectedProduct.images[0]);
+        }
     }, [selectedProduct]);
 
     const handleReviewSubmit = async (e) => {
@@ -254,14 +256,14 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
                 <motion.div key={selectedImage} initial={{opacity:0}} animate={{opacity:1}} className="mb-4">
                   <img src={selectedImage} alt={selectedProduct.name} className="object-contain w-full rounded-lg shadow-xl" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found'; }}/>
                 </motion.div>
-                <div className="flex space-x-2 overflow-x-auto">
+                <div className="flex space-x-2 overflow-x-auto p-2">
                     {selectedProduct.images && selectedProduct.images.map((img, index) => (
                         <img 
                             key={index}
                             src={img}
                             alt={`${selectedProduct.name} thumbnail ${index + 1}`}
                             onClick={() => setSelectedImage(img)}
-                            className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${selectedImage === img ? 'border-lime-500' : 'border-transparent'}`}
+                            className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 transition-all ${selectedImage === img ? 'border-lime-500 scale-110' : 'border-transparent'}`}
                         />
                     ))}
                 </div>
