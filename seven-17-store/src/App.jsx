@@ -84,7 +84,7 @@ const ProductCard = ({ product, onViewProduct, onAddToCart }) => (
             <img
                 src={product.image}
                 alt={product.name}
-                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
                 onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found'; }}
             />
         </div>
@@ -324,7 +324,6 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
       </motion.div>
     );
 };
-
 const CheckoutResultPage = ({ success, setCurrentPage }) => (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center">
         <div className="p-8 bg-white rounded-lg shadow-lg">
