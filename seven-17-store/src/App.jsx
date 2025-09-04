@@ -322,6 +322,7 @@ const AuthPage = ({ setCurrentPage, setModal }) => {
                 setCurrentPage('home');
             } else {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
                 await setDoc(doc(db, "users", userCredential.user.uid), { name: name, email: email, isAdmin: false });
                 setModal({ title: 'Success!', message: 'Your account has been created.' });
                 setCurrentPage('home');
