@@ -13,7 +13,7 @@
 //    Add the "Poppins" font to your `public/index.html` file.
 // -----------------------------------------------------------------------------
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail, Package, Settings, Sun, Leaf, Snowflake, Flower, Edit, Trash2, PlusCircle, MessageSquare } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -193,29 +193,30 @@ const StarRatingInput = ({ rating, setRating }) => (
     </div>
 );
 
-const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, setModal }) => {
+const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, isAdmin, setModal }) => {
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
     const [newRating, setNewRating] = useState(0);
     const [newComment, setNewComment] = useState('');
 
-    useEffect(() => {
-        const fetchReviews = async () => {
-            if (!selectedProduct) return;
-            setLoadingReviews(true);
-            try {
-                const reviewsQuery = query(collection(db, "reviews"), where("productId", "==", selectedProduct.id), orderBy("createdAt", "desc"));
-                const querySnapshot = await getDocs(reviewsQuery);
-                const reviewsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setReviews(reviewsData);
-            } catch (error) {
-                console.error("Error fetching reviews: ", error);
-            } finally {
-                setLoadingReviews(false);
-            }
-        };
-        fetchReviews();
+    const fetchReviews = useCallback(async () => {
+        if (!selectedProduct) return;
+        setLoadingReviews(true);
+        try {
+            const reviewsQuery = query(collection(db, "reviews"), where("productId", "==", selectedProduct.id), orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(reviewsQuery);
+            const reviewsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setReviews(reviewsData);
+        } catch (error) {
+            console.error("Error fetching reviews: ", error);
+        } finally {
+            setLoadingReviews(false);
+        }
     }, [selectedProduct]);
+
+    useEffect(() => {
+        fetchReviews();
+    }, [fetchReviews]);
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
@@ -235,12 +236,23 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, s
             setModal({ title: "Review Submitted", message: "Thank you for your feedback!" });
             setNewRating(0);
             setNewComment('');
-            const reviewsQuery = query(collection(db, "reviews"), where("productId", "==", selectedProduct.id), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(reviewsQuery);
-            setReviews(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            fetchReviews();
         } catch (error) {
             setModal({ title: "Error", message: "Could not submit your review. Please try again." });
             console.error("Error submitting review: ", error);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        if (window.confirm('Are you sure you want to delete this review?')) {
+            try {
+                await deleteDoc(doc(db, 'reviews', reviewId));
+                setModal({ title: 'Success', message: 'Review deleted.' });
+                fetchReviews();
+            } catch (error) {
+                setModal({ title: 'Error', message: 'Failed to delete review.' });
+                console.error("Error deleting review:", error);
+            }
         }
     };
 
@@ -292,13 +304,18 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, s
             <div className="space-y-6">
                 {loadingReviews ? <p>Loading reviews...</p> : reviews.length > 0 ? (
                     reviews.map(review => (
-                        <div key={review.id} className="p-4 bg-white rounded-lg shadow">
+                        <div key={review.id} className="p-4 bg-white rounded-lg shadow relative">
                             <div className="flex items-center mb-2">
                                 <p className="font-bold mr-4">{review.userName}</p>
                                 <div className="flex items-center">{Array.from({ length: 5 }, (_, i) => <Star key={i} className={`w-5 h-5 ${i < review.rating ? 'text-lime-400 fill-current' : 'text-gray-300'}`} />)}</div>
                             </div>
-                            <p className="text-gray-700">{review.comment}</p>
+                            <p className="text-gray-700 pr-12">{review.comment}</p>
                             <p className="text-xs text-gray-400 mt-2">{new Date(review.createdAt.seconds * 1000).toLocaleString()}</p>
+                             {isAdmin && (
+                                <button onClick={() => handleDeleteReview(review.id)} className="absolute top-2 right-2 p-2 text-red-500 hover:bg-red-100 rounded-full">
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
                     ))
                 ) : <p>No reviews yet. Be the first!</p>}
@@ -307,6 +324,7 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, s
       </motion.div>
     );
 };
+
 const CheckoutResultPage = ({ success, setCurrentPage }) => (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center">
         <div className="p-8 bg-white rounded-lg shadow-lg">
@@ -620,7 +638,7 @@ export default function App() {
     const handleCheckout = async () => { if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; } if (user) { localStorage.setItem('cartForCheckout', JSON.stringify(cart)); } const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3'); const response = await fetch('http://localhost:4242/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart }), }); if (!response.ok) { setModal({ title: 'Server Error', message: 'Could not connect. Is it running?' }); return; } const session = await response.json(); const result = await stripe.redirectToCheckout({ sessionId: session.id }); if (result.error) { setModal({ title: 'Checkout Error', message: result.error.message }); localStorage.removeItem('cartForCheckout'); } };
 
     const renderPage = () => {
-        const props = { setCurrentPage, setSelectedProduct, addToCart, setModal, selectedProduct, user, products, setProducts };
+        const props = { setCurrentPage, setSelectedProduct, addToCart, setModal, selectedProduct, user, isAdmin, products, setProducts };
         switch (currentPage) {
             case 'home': return <HomePage {...props} />;
             case 'products': return <ProductsPage {...props} />;
