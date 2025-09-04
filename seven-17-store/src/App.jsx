@@ -307,6 +307,52 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, s
       </motion.div>
     );
 };
+const CheckoutResultPage = ({ success, setCurrentPage }) => (
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center">
+        <div className="p-8 bg-white rounded-lg shadow-lg">
+            {success ? <CheckCircle className="w-16 h-16 mx-auto text-green-500" /> : <XCircle className="w-16 h-16 mx-auto text-red-500" />}
+            <h2 className="mt-4 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                {success ? 'Payment Successful!' : 'Payment Canceled'}
+            </h2>
+            <p className="mt-2 text-gray-600">
+                {success ? "Thank you for your purchase." : "Your order was canceled."}
+            </p>
+            <button onClick={() => setCurrentPage('products')} className="px-6 py-3 mt-8 font-semibold text-white transition-transform duration-200 bg-lime-500 rounded-md shadow-lg hover:bg-lime-600 hover:scale-105">
+                Continue Shopping
+            </button>
+        </div>
+    </motion.div>
+);
+const ContactPage = ({ setModal }) => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await addDoc(collection(db, "messages"), { name, email, message, createdAt: serverTimestamp() });
+            setModal({ title: 'Message Sent!', message: "Thanks for reaching out. We'll get back to you soon." });
+            setName(''); setEmail(''); setMessage('');
+        } catch (error) {
+            setModal({ title: 'Error', message: 'Could not send message. Please try again.' });
+            console.error("Error adding document: ", error);
+        }
+    };
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8">
+            <div className="p-8 bg-white rounded-lg shadow-lg">
+                <h2 className="mb-2 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Contact Us</h2>
+                <p className="mb-8 text-center text-gray-600">Have a question or feedback? Drop us a line!</p>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div><label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
+                    <div><label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm" /></div>
+                    <div><label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label><textarea value={message} onChange={(e) => setMessage(e.target.value)} rows="4" required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-lime-500 focus:border-lime-500 sm:text-sm"></textarea></div>
+                    <div><button type="submit" className="flex items-center justify-center w-full px-4 py-3 font-semibold text-gray-900 transition-colors duration-200 bg-lime-500 border border-transparent rounded-md shadow-sm hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500"><Send className="w-5 h-5 mr-2" />Send Message</button></div>
+                </form>
+            </div>
+        </motion.div>
+    );
+};
 const AuthPage = ({ setCurrentPage, setModal }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
