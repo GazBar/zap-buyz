@@ -193,7 +193,7 @@ const StarRatingInput = ({ rating, setRating }) => (
     </div>
 );
 
-const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, isAdmin, setModal }) => {
+const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, isAdmin, setModal, favorites, handleToggleFavorite }) => {
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
     const [newRating, setNewRating] = useState(0);
@@ -249,6 +249,8 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
         }
     };
 
+    const isFavorited = favorites.includes(selectedProduct.id);
+
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:space-x-8">
@@ -271,7 +273,10 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
             <div className="w-full mt-8 lg:w-1/2 lg:mt-0">
                 <div className="pb-6 border-b border-gray-200"><h1 className="text-4xl font-bold text-gray-900">{selectedProduct.name}</h1><div className="flex items-center mt-2 space-x-2 text-lime-400">{Array.from({ length: 5 }, (_, i) => (<Star key={i} className={`w-5 h-5 ${i < Math.floor(selectedProduct.rating) ? 'fill-current' : 'text-gray-300'}`} />))}<span className="text-lg font-semibold text-gray-600 ml-2">{selectedProduct.rating}</span><span className="text-sm text-gray-500">({selectedProduct.reviews} reviews)</span></div><p className="mt-4 text-3xl font-bold text-gray-900">£{selectedProduct.price.toFixed(2)}</p></div>
                 <div className="mt-6"><h2 className="text-xl font-semibold text-gray-900">Product Description</h2><p className="mt-2 text-gray-600">{selectedProduct.description}</p></div>
-                <div className="flex items-center mt-8 space-x-4"><button onClick={() => addToCart(selectedProduct)} className="flex-1 px-6 py-3 text-lg font-semibold text-gray-900 transition-all duration-300 bg-lime-500 rounded-md shadow-md hover:bg-lime-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"><span className="flex items-center justify-center space-x-2"><ShoppingCart className="w-5 h-5" /><span>Add to Cart</span></span></button><button className="p-3 text-gray-600 transition-colors duration-200 bg-gray-100 rounded-md hover:bg-gray-200" aria-label="Add to wishlist"><Heart className="w-6 h-6" /></button></div>
+                <div className="flex items-center mt-8 space-x-4">
+                    <button onClick={() => addToCart(selectedProduct)} className="flex-1 px-6 py-3 text-lg font-semibold text-gray-900 transition-all duration-300 bg-lime-500 rounded-md shadow-md hover:bg-lime-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2"><span className="flex items-center justify-center space-x-2"><ShoppingCart className="w-5 h-5" /><span>Add to Cart</span></span></button>
+                    <button onClick={() => handleToggleFavorite(selectedProduct.id)} className={`p-3 transition-colors duration-200 rounded-md ${isFavorited ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} aria-label="Add to wishlist"><Heart className={`w-6 h-6 ${isFavorited ? 'fill-current' : ''}`} /></button>
+                </div>
                  <button onClick={() => setCurrentPage('products')} className="flex items-center mt-8 text-lime-600 transition-colors duration-200 hover:text-lime-800"><ChevronLeft className="w-4 h-4 mr-2" /> Back to Products</button>
             </div>
         </div>
@@ -284,12 +289,14 @@ const CheckoutResultPage = ({ success, setCurrentPage }) => ( <motion.div initia
 const ContactPage = ({ setModal }) => { const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [message, setMessage] = useState(''); const handleSubmit = async (e) => { e.preventDefault(); try { await addDoc(collection(db, "messages"), { name, email, message, createdAt: serverTimestamp() }); setModal({ title: 'Message Sent!', message: "Thanks for reaching out." }); setName(''); setEmail(''); setMessage(''); } catch (error) { setModal({ title: 'Error', message: 'Could not send message.' }); console.error(error); } }; return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8"><div className="p-8 bg-white rounded-lg shadow-lg"><h2 className="mb-2 text-3xl font-bold text-center text-gray-900">Contact Us</h2><p className="mb-8 text-center text-gray-600">Have a question? Drop us a line!</p><form onSubmit={handleSubmit} className="space-y-6"><div><label htmlFor="name">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/></div><div><label htmlFor="email">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/></div><div><label htmlFor="message">Message</label><textarea value={message} onChange={(e) => setMessage(e.target.value)} rows="4" required className="block w-full px-3 py-2 mt-1 border rounded-md"></textarea></div><div><button type="submit" className="flex items-center justify-center w-full px-4 py-3 font-semibold text-gray-900 bg-lime-500 rounded-md"><Send className="w-5 h-5 mr-2" />Send Message</button></div></form></div></motion.div> ); };
 const AuthPage = ({ setCurrentPage, setModal }) => { const [isLogin, setIsLogin] = useState(true); const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [name, setName] = useState(''); const handleSubmit = async (e) => { e.preventDefault(); try { if (isLogin) { await signInWithEmailAndPassword(auth, email, password); setModal({ title: 'Success!', message: 'You are now logged in.' }); setCurrentPage('home'); } else { const cred = await createUserWithEmailAndPassword(auth, email, password); await updateProfile(cred.user, { displayName: name }); await setDoc(doc(db, "users", cred.user.uid), { name, email, isAdmin: false }); setModal({ title: 'Success!', message: 'Account created.' }); setCurrentPage('home'); } } catch (error) { setModal({ title: 'Auth Error', message: error.message }); } }; return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-md sm:p-6 lg:p-8"><div className="p-8 bg-white rounded-lg shadow-lg"><h2 className="mb-6 text-3xl font-bold text-center text-gray-900">{isLogin ? 'Welcome Back!' : 'Create an Account'}</h2><form onSubmit={handleSubmit} className="space-y-6">{!isLogin && ( <div><label htmlFor="name">Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md" /></div> )}<div><label htmlFor="email">Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md" /></div><div><label htmlFor="password">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md" /></div><div><button type="submit" className="w-full px-4 py-3 font-semibold text-gray-900 bg-lime-500 rounded-md">{isLogin ? 'Log In' : 'Sign Up'}</button></div></form><p className="mt-4 text-sm text-center"><button onClick={() => setIsLogin(!isLogin)} className="font-medium text-lime-600 hover:text-lime-500">{isLogin ? 'Need an account? Sign up' : 'Have an account? Log in'}</button></p></div></motion.div> ); };
 
-const AccountPage = ({ user, setModal, setCurrentPage }) => {
+const AccountPage = ({ user, setModal, setCurrentPage, favorites, products, addToCart }) => {
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [name, setName] = useState(user.displayName || '');
     const [email, setEmail] = useState(user.email || '');
+
+    const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
     useEffect(() => {
         const fetchOrders = async () => { if (user) { try { const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc")); const snap = await getDocs(q); setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); } catch (e) { console.error(e); } finally { setLoadingOrders(false); } } };
@@ -300,7 +307,7 @@ const AccountPage = ({ user, setModal, setCurrentPage }) => {
     const handlePasswordReset = async () => { try { await sendPasswordResetEmail(auth, user.email); setModal({ title: 'Password Reset', message: 'Reset link sent to your email.' }); } catch (e) { setModal({ title: 'Error', message: e.message }); } };
     const handleLogout = async () => { await signOut(auth); setCurrentPage('home'); };
 
-    return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
+    return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} onViewProduct={() => {setSelectedProduct(p); setCurrentPage('product');}} onAddToCart={addToCart} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
 
 const AdminPage = ({ user, products, setProducts, setModal }) => {
     const [activeTab, setActiveTab] = useState('messages');
@@ -379,6 +386,7 @@ export default function App() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [modal, setModal] = useState(null);
     const [products, setProducts] = useState([]); 
+    const [favorites, setFavorites] = useState([]);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -397,7 +405,15 @@ export default function App() {
                 const userDocRef = doc(db, "users", currentUser.uid);
                 const userDoc = await getDoc(userDocRef);
                 setIsAdmin(userDoc.exists() && userDoc.data().isAdmin);
-            } else { setIsAdmin(false); }
+
+                const favsCollection = collection(db, `users/${currentUser.uid}/favorites`);
+                const favsSnapshot = await getDocs(favsCollection);
+                setFavorites(favsSnapshot.docs.map(doc => doc.id));
+
+            } else { 
+                setIsAdmin(false); 
+                setFavorites([]);
+            }
             setAuthChecked(true);
         });
         return () => unsubscribe();
@@ -433,10 +449,28 @@ export default function App() {
     const removeFromCart = (productId) => setCart((prev) => prev.filter(i => i.id !== productId));
     const updateQuantity = (productId, newQuantity) => { if (newQuantity <= 0) { removeFromCart(productId); } else { setCart((prev) => prev.map(i => i.id === productId ? { ...i, quantity: newQuantity } : i)); } };
     const calculateTotal = () => cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+
+    const handleToggleFavorite = async (productId) => {
+        if (!user) {
+            setModal({ title: 'Login Required', message: 'You need to be logged in to save favorites.' });
+            return;
+        }
+        const favRef = doc(db, `users/${user.uid}/favorites/${productId}`);
+        if (favorites.includes(productId)) {
+            await deleteDoc(favRef);
+            setFavorites(prev => prev.filter(id => id !== productId));
+            setModal({ title: 'Removed', message: 'Removed from your favorites.' });
+        } else {
+            await setDoc(favRef, { productId, createdAt: serverTimestamp() });
+            setFavorites(prev => [...prev, productId]);
+            setModal({ title: 'Added!', message: 'Added to your favorites.' });
+        }
+    };
+
     const handleCheckout = async () => { if (!window.Stripe) { setModal({ title: 'Error', message: 'Stripe is not loaded.' }); return; } if (user) { localStorage.setItem('cartForCheckout', JSON.stringify(cart)); } const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3'); const response = await fetch('http://localhost:4242/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: cart }), }); if (!response.ok) { setModal({ title: 'Server Error', message: 'Could not connect. Is it running?' }); return; } const session = await response.json(); const result = await stripe.redirectToCheckout({ sessionId: session.id }); if (result.error) { setModal({ title: 'Checkout Error', message: result.error.message }); localStorage.removeItem('cartForCheckout'); } };
 
     const renderPage = () => {
-        const props = { setCurrentPage, setSelectedProduct, addToCart, setModal, selectedProduct, user, isAdmin, products, setProducts };
+        const props = { setCurrentPage, setSelectedProduct, addToCart, setModal, selectedProduct, user, isAdmin, products, setProducts, favorites, handleToggleFavorite };
         switch (currentPage) {
             case 'home': return <HomePage {...props} />;
             case 'products': return <ProductsPage {...props} />;
