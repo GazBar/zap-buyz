@@ -252,7 +252,7 @@ const ProductDetailPage = ({ selectedProduct, setCurrentPage, addToCart, user, i
         <div className="flex flex-col lg:flex-row lg:space-x-8">
             <div className="w-full lg:w-1/2">
                 <motion.div key={selectedImage} initial={{opacity:0}} animate={{opacity:1}} className="mb-4">
-                  <img src={selectedImage} alt={selectedProduct.name} className="object-contain w-full h-96 rounded-lg shadow-xl" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found'; }}/>
+                  <img src={selectedImage} alt={selectedProduct.name} className="object-contain w-full rounded-lg shadow-xl" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found'; }}/>
                 </motion.div>
                 <div className="flex space-x-2 overflow-x-auto">
                     {selectedProduct.images && selectedProduct.images.map((img, index) => (
