@@ -636,18 +636,3 @@ export default function App() {
     );
 }
 
-// NOTE: This App component now uses a <BrowserRouter> internally.
-// To make this work, the main App component that renders everything else
-// should NOT be wrapped in another <BrowserRouter> in your index.js.
-// So, we'll create a Root component to handle the routing.
-
-function Root() {
-    return (
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    );
-}
-
-// We export Root as the default, which should be rendered in your index.js
-export default Root;
