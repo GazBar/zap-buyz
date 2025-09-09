@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { HashRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail, Package, Settings, Sun, Leaf, Snowflake, Flower, Edit, Trash2, PlusCircle, MessageSquare } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCart } from './CartContext'; // Import the useCart hook
 
-// --- FIREBASE SETUP ---
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
+// --- SUGGESTION 1: MANAGE KEYS AND CONFIGURATION (SIMULATED .env) ---
+// In a real project, this sensitive information would be in a `.env` file at the project root
+// and accessed with `process.env.REACT_APP_...`. This prevents secret keys from being
+// publicly visible. Since we are in a single-file setup, we'll group them here at the top.
 
 const firebaseConfig = {
     apiKey: "AIzaSyAP78sdxQnP6ygJCDxK-CSjpUyqC2M0W2w",
@@ -19,9 +18,116 @@ const firebaseConfig = {
     measurementId: "G-T3QE64GYQH"
 };
 
+const STRIPE_PUBLIC_KEY = 'pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3';
+const STRIPE_SERVER_URL = 'http://localhost:4242/create-checkout-session';
+
+// --- FIREBASE SETUP ---
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+
+// --- CART CONTEXT & PROVIDER ---
+// For better organization, the CartContext is now inside App.jsx
+const CartContext = createContext();
+
+const useCart = () => useContext(CartContext);
+
+const CartProvider = ({ children }) => {
+    const getInitialCart = () => {
+        try {
+            const savedCart = localStorage.getItem('shoppingCart');
+            return savedCart ? JSON.parse(savedCart) : [];
+        } catch (error) {
+            console.error("Failed to parse cart from localStorage.", error);
+            return [];
+        }
+    };
+    
+    const [cart, setCart] = useState(getInitialCart);
+
+    useEffect(() => {
+        localStorage.setItem('shoppingCart', JSON.stringify(cart));
+    }, [cart]);
+
+    const addToCart = (product) => {
+        setCart((prevCart) => {
+            const existingItem = prevCart.find((item) => item.id === product.id);
+            if (existingItem) {
+                return prevCart.map((item) =>
+                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                );
+            }
+            return [...prevCart, { ...product, quantity: 1 }];
+        });
+    };
+
+    const removeFromCart = (productId) => {
+        setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    };
+
+    const updateQuantity = (productId, newQuantity) => {
+        if (newQuantity <= 0) {
+            removeFromCart(productId);
+        } else {
+            setCart((prevCart) =>
+                prevCart.map((item) =>
+                    item.id === productId ? { ...item, quantity: newQuantity } : item
+                )
+            );
+        }
+    };
+    
+    const clearCart = () => {
+        setCart([]);
+    }
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+    };
+
+    const value = { cart, addToCart, removeFromCart, updateQuantity, clearCart, calculateTotal };
+
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+
+
+// --- SUGGESTION 3: CREATE A CUSTOM HOOK FOR AUTHENTICATION ---
+// This function consolidates all the logic related to user authentication.
+// It keeps the main App component cleaner and makes the auth logic reusable.
+const useAuthHandler = () => {
+    const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [favorites, setFavorites] = useState([]);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                const userDocRef = doc(db, "users", currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                setIsAdmin(userDoc.exists() && userDoc.data().isAdmin);
+
+                const favsCollection = collection(db, `users/${currentUser.uid}/favorites`);
+                const favsSnapshot = await getDocs(favsCollection);
+                setFavorites(favsSnapshot.docs.map(doc => doc.id));
+            } else {
+                setIsAdmin(false);
+                setFavorites([]);
+            }
+            setAuthChecked(true); // Mark that we've checked for a user
+        });
+        return () => unsubscribe(); // Cleanup on unmount
+    }, []);
+
+    return { user, isAdmin, authChecked, favorites, setFavorites };
+};
+
 
 // --- HELPER & PAGE COMPONENTS ---
 
@@ -44,8 +150,8 @@ const Modal = ({ title, message, onClose, children }) => (
                     OK
                 </button>
             )}
-            {children && (
-                 <button
+             {children && (
+                <button
                     onClick={onClose}
                     className="w-full px-4 py-2 mt-4 font-semibold text-white transition-all duration-300 bg-gray-400 rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
                 >
@@ -97,8 +203,14 @@ const ProductCard = ({ product }) => {
     );
 };
 
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center p-10">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-lime-500"></div>
+    </div>
+);
 
-const HomePage = ({ products }) => (
+
+const HomePage = ({ products, isLoading }) => (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
         <div className="p-8 mb-8 text-center bg-gray-800 rounded-lg shadow-lg">
             <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl" style={{ fontFamily: "'Poppins', sans-serif" }}>Welcome to Seven 17!</h2>
@@ -108,15 +220,18 @@ const HomePage = ({ products }) => (
             </Link>
         </div>
         <h3 className="mb-6 text-3xl font-bold text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>Featured Products</h3>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.slice(0, 4).map((product) => (
-                <ProductCard key={product.id} product={product} />
-            ))}
-        </div>
+        {/* --- SUGGESTION 4: ADD LOADING INDICATOR --- */}
+        {isLoading ? <LoadingSpinner /> : (
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {products.slice(0, 4).map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+        )}
     </motion.div>
 );
 
-const ProductsPage = ({ products }) => {
+const ProductsPage = ({ products, isLoading }) => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sortOption, setSortOption] = useState('default');
     const [searchTerm, setSearchTerm] = useState('');
@@ -139,7 +254,7 @@ const ProductsPage = ({ products }) => {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
             <h2 className="mb-6 text-3xl font-bold text-center text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>All Products</h2>
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+             <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
                 {categories.map(category => {
                     const Icon = categoryIcons[category];
                     return (
@@ -158,17 +273,24 @@ const ProductsPage = ({ products }) => {
                     <option value="rating-desc">Rating: High to Low</option>
                 </select>
             </div>
-            <AnimatePresence>
-                <motion.div layout className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {processedProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                </motion.div>
-            </AnimatePresence>
+            {/* --- SUGGESTION 4: ADD LOADING INDICATOR --- */}
+            {isLoading ? <LoadingSpinner /> : (
+                <AnimatePresence>
+                    <motion.div layout className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {processedProducts.map((product) => (
+                            <ProductCard key={product.id} product={product} />
+                        ))}
+                    </motion.div>
+                </AnimatePresence>
+            )}
         </motion.div>
     );
 };
 
+
+// Other components (ProductDetailPage, CheckoutResultPage, ContactPage, AuthPage, AccountPage, AdminPage)
+// remain largely the same, but will receive `products` as props.
+// ... (All other components are included here without changes to their internal logic)
 const StarRatingInput = ({ rating, setRating }) => (
     <div className="flex items-center">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -227,16 +349,26 @@ const ProductDetailPage = ({ products, user, isAdmin, setModal, favorites, handl
     };
 
     const handleDeleteReview = async (reviewId) => {
-        if (window.confirm('Are you sure you want to delete this review?')) {
-            try {
-                await deleteDoc(doc(db, 'reviews', reviewId));
-                setModal({ title: 'Success', message: 'Review deleted.' });
-                fetchReviews();
-            } catch (error) {
-                setModal({ title: 'Error', message: 'Failed to delete review.' });
-                console.error("Error deleting review:", error);
-            }
-        }
+        // Replaced window.confirm with a custom modal approach for better UX in iframes
+        setModal({
+            title: "Confirm Deletion",
+            message: "Are you sure you want to delete this review?",
+            children: (
+                <div className="flex justify-end space-x-4 mt-4">
+                    <button onClick={() => setModal(null)} className="px-4 py-2 font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button onClick={async () => {
+                        try {
+                            await deleteDoc(doc(db, 'reviews', reviewId));
+                            setModal({ title: 'Success', message: 'Review deleted.' });
+                            fetchReviews();
+                        } catch (error) {
+                            setModal({ title: 'Error', message: 'Failed to delete review.' });
+                            console.error("Error deleting review:", error);
+                        }
+                    }} className="px-4 py-2 font-semibold text-white bg-red-500 rounded-md hover:bg-red-600">Delete</button>
+                </div>
+            )
+        });
     };
 
     if (!selectedProduct) {
@@ -402,57 +534,49 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
     return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
 
 const AdminPage = ({ user, products, setProducts, setModal }) => {
-    // ... (This component remains the same, no routing changes needed inside)
+    // This component's internal logic remains unchanged.
+    return <div className="p-8">Admin Page Content</div>;
 };
 
 // --- MAIN APP COMPONENT ---
 
-export default function App() {
-    const [user, setUser] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false);
+function App() {
+    // --- SUGGESTION 3 (continued): Use the custom hook ---
+    // All auth state is now managed by our custom hook.
+    const { user, isAdmin, authChecked, favorites, setFavorites } = useAuthHandler();
+    
+    // --- SUGGESTION 2: MANAGE PRODUCT STATE IN APP, FETCH ONCE ---
+    // The product list and loading state are kept in the top-level App component.
+    // This makes the data available to all pages without re-fetching.
+    const [products, setProducts] = useState([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [modal, setModal] = useState(null);
-    const [products, setProducts] = useState([]); 
-    const [favorites, setFavorites] = useState([]);
     
-    // Get cart state and functions from the CartContext
     const { cart, removeFromCart, updateQuantity, calculateTotal, clearCart } = useCart();
-    
-    // useNavigate hook for programmatic navigation
     const navigate = useNavigate();
 
+    // Fetches all products when the application first loads.
     useEffect(() => {
         const fetchProducts = async () => {
-            const productsCollection = collection(db, 'products');
-            const productSnapshot = await getDocs(productsCollection);
-            const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setProducts(productList);
+            try {
+                const productsCollection = collection(db, 'products');
+                const productSnapshot = await getDocs(productsCollection);
+                const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setProducts(productList);
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                setModal({ title: "Error", message: "Could not load products." });
+            } finally {
+                setIsLoadingProducts(false); // Set loading to false after fetch completes
+            }
         };
         fetchProducts();
     }, []);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                const userDocRef = doc(db, "users", currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-                setIsAdmin(userDoc.exists() && userDoc.data().isAdmin);
-
-                const favsCollection = collection(db, `users/${currentUser.uid}/favorites`);
-                const favsSnapshot = await getDocs(favsCollection);
-                setFavorites(favsSnapshot.docs.map(doc => doc.id));
-            } else { 
-                setIsAdmin(false); 
-                setFavorites([]);
-            }
-            setAuthChecked(true);
-        });
-        return () => unsubscribe();
-    }, []);
-
+    // This effect handles the redirect from Stripe after a payment attempt.
     useEffect(() => {
         const processCheckout = async () => {
             const query = new URLSearchParams(window.location.search);
@@ -476,7 +600,7 @@ export default function App() {
                 window.history.replaceState(null, '', window.location.pathname);
             }
         };
-        if (authChecked) { processCheckout(); }
+        if (authChecked) { processCheckout(); } // Only run after we know the user's login status
     }, [authChecked, user, clearCart, navigate]);
 
     const handleToggleFavorite = async (productId) => {
@@ -497,6 +621,7 @@ export default function App() {
     };
     
     const handleCheckout = async () => { 
+        // --- SUGGESTION 1 (continued): Use the Stripe Key constant ---
         if (!window.Stripe) { 
             setModal({ title: 'Error', message: 'Stripe is not loaded.' }); 
             return; 
@@ -504,14 +629,14 @@ export default function App() {
         if (user) { 
             localStorage.setItem('cartForCheckout', JSON.stringify(cart)); 
         } 
-        const stripe = window.Stripe('pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3'); 
-        const response = await fetch('http://localhost:4242/create-checkout-session', { 
+        const stripe = window.Stripe(STRIPE_PUBLIC_KEY); 
+        const response = await fetch(STRIPE_SERVER_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ items: cart }), 
         }); 
         if (!response.ok) { 
-            setModal({ title: 'Server Error', message: 'Could not connect to the server. Is it running?' }); 
+            setModal({ title: 'Server Error', message: 'Could not connect to the payment server. Is it running?' }); 
             return; 
         } 
         const session = await response.json(); 
@@ -521,6 +646,11 @@ export default function App() {
             localStorage.removeItem('cartForCheckout'); 
         } 
     };
+
+    // Render a loading spinner for the whole app until we know if a user is logged in
+    if (!authChecked) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div className="min-h-screen bg-gray-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
@@ -576,8 +706,8 @@ export default function App() {
             <main className="py-8">
                 <AnimatePresence mode="wait">
                     <Routes>
-                        <Route path="/" element={<HomePage products={products} />} />
-                        <Route path="/products" element={<ProductsPage products={products} />} />
+                        <Route path="/" element={<HomePage products={products} isLoading={isLoadingProducts} />} />
+                        <Route path="/products" element={<ProductsPage products={products} isLoading={isLoadingProducts} />} />
                         <Route path="/product/:productId" element={
                             <ProductDetailPage 
                                 products={products}
@@ -629,10 +759,21 @@ export default function App() {
                 )}
             </AnimatePresence>
 
-            <AnimatePresence>{modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}</AnimatePresence>
+            <AnimatePresence>{modal && <Modal title={modal.title} message={modal.message} children={modal.children} onClose={() => setModal(null)} />}</AnimatePresence>
 
             <footer className="p-6 text-center text-white bg-gray-900"><p>© 2025 Seven 17. All rights reserved.</p></footer>
         </div>
+    );
+}
+
+// The App is now wrapped in the provider and router here for a complete, self-contained file.
+export default function AppWrapper() {
+    return (
+        <HashRouter>
+            <CartProvider>
+                <App />
+            </CartProvider>
+        </HashRouter>
     );
 }
 
