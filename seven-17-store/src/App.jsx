@@ -523,9 +523,35 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
     const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
     useEffect(() => {
-        const fetchOrders = async () => { if (user) { try { const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc")); const snap = await getDocs(q); setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() }))); } catch (e) { console.error(e); } finally { setLoadingOrders(false); } } };
-        if (activeTab === 'orders') { fetchOrders(); }
-    }, [user, activeTab]);
+        const fetchOrders = async () => {
+            if (user) {
+                try {
+                    // FIX: Removed orderBy from the query to avoid silent failures on missing Firestore indexes.
+                    const q = query(collection(db, "orders"), where("userId", "==", user.uid));
+                    const snap = await getDocs(q);
+                    const userOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    
+                    // FIX: Sort orders by creation date on the client-side.
+                    userOrders.sort((a, b) => {
+                        const dateA = a.createdAt?.seconds || 0;
+                        const dateB = b.createdAt?.seconds || 0;
+                        return dateB - dateA;
+                    });
+
+                    setOrders(userOrders);
+                } catch (e) {
+                    console.error("Failed to fetch orders:", e);
+                    setModal({ title: 'Error', message: 'Could not load your order history.' });
+                } finally {
+                    setLoadingOrders(false);
+                }
+            }
+        };
+
+        if (activeTab === 'orders') {
+            fetchOrders();
+        }
+    }, [user, activeTab, setModal]);
 
     const handleUpdateProfile = async (e) => { e.preventDefault(); try { if (auth.currentUser.displayName !== name) { await updateProfile(auth.currentUser, { displayName: name }); } if (auth.currentUser.email !== email) { await updateEmail(auth.currentUser, email); } await setDoc(doc(db, "users", user.uid), { name, email }, { merge: true }); setModal({ title: 'Success', message: 'Profile updated.' }); } catch (e) { setModal({ title: 'Error', message: e.message }); } };
     const handlePasswordReset = async () => { try { await sendPasswordResetEmail(auth, user.email); setModal({ title: 'Password Reset', message: 'Reset link sent to your email.' }); } catch (e) { setModal({ title: 'Error', message: e.message }); } };
@@ -776,4 +802,5 @@ export default function AppWrapper() {
         </HashRouter>
     );
 }
+
 
