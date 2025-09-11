@@ -213,7 +213,7 @@ const LoadingSpinner = () => (
 const HomePage = ({ products, isLoading }) => (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-7xl sm:p-6 lg:p-8">
         <div className="p-8 mb-8 text-center bg-gray-800 rounded-lg shadow-lg">
-            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl" style={{ fontFamily: "'Poppins', sans-serif" }}>Welcome to Seven 17!</h2>
+            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl" style={{ fontFamily: "'Poppins', sans-serif" }}>Welcome to Zap BuyZ!</h2>
             <p className="mt-4 text-xl text-gray-300">The fastest way to get the best products.</p>
             <Link to="/products" className="inline-block px-8 py-4 mt-8 font-bold text-gray-900 transition-all duration-300 transform bg-gradient-to-r from-lime-400 to-lime-500 rounded-md shadow-lg hover:shadow-lime-500/50 hover:scale-105">
                 Shop Now
@@ -686,7 +686,7 @@ function App() {
                         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 transition-colors duration-200 rounded-full lg:hidden hover:bg-gray-100" aria-label="Toggle mobile menu">{isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}</button>
                         <Link to="/" className="flex items-center space-x-2 text-2xl font-extrabold text-gray-900">
                             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12L12 4L20 12L12 20L4 12Z" stroke="#A3E635" strokeWidth="2" strokeLinejoin="round"/><path d="M12 4L20 12L12 20" stroke="#4D7C0F" strokeWidth="2" strokeLinejoin="round"/></svg>
-                            <span>Seven 17</span>
+                            <span>Zap BuyZ</span>
                         </Link>
                     </div>
                     <nav className="hidden lg:flex lg:space-x-8">
@@ -715,7 +715,7 @@ function App() {
                         <div className="flex items-center justify-between p-4 border-b">
                             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center space-x-2 text-xl font-extrabold text-gray-900">
                                 <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 12L12 4L20 12L12 20L4 12Z" stroke="#A3E635" strokeWidth="2" strokeLinejoin="round"/><path d="M12 4L20 12L12 20" stroke="#4D7C0F" strokeWidth="2" strokeLinejoin="round"/></svg>
-                                <span>Seven 17</span>
+                                <span>Zap BuyZ</span>
                             </Link>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X className="w-6 h-6" /></button>
                         </div>
@@ -787,7 +787,7 @@ function App() {
 
             <AnimatePresence>{modal && <Modal title={modal.title} message={modal.message} children={modal.children} onClose={() => setModal(null)} />}</AnimatePresence>
 
-            <footer className="p-6 text-center text-white bg-gray-900"><p>© 2025 Seven 17. All rights reserved.</p></footer>
+            <footer className="p-6 text-center text-white bg-gray-900"><p>© 2025 Zap BuyZ. All rights reserved.</p></footer>
         </div>
     );
 }
