@@ -5,8 +5,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// --- IMPORTANT: SIMPLIFIED CORS CONFIGURATION FOR DIAGNOSTICS ---
-// This temporarily allows requests from any origin.
+// --- IMPORTANT: For production, you should restrict this to your actual domain ---
+// Example: app.use(cors({ origin: 'https://zap-buyz.netlify.app' }));
 app.use(cors()); 
 
 app.use(express.json());
@@ -24,9 +24,10 @@ app.post('/create-checkout-session', async (req, res) => {
       currency: 'gbp',
       product_data: {
         name: item.name,
-        images: [item.image],
+        // Ensure your product objects in the front-end have an 'image' property
+        images: item.images && item.images[0] ? [item.images[0]] : [],
       },
-      unit_amount: Math.round(item.price * 100),
+      unit_amount: Math.round(item.price * 100), // Price in pence
     },
     quantity: item.quantity,
   }));
@@ -36,8 +37,10 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       line_items: line_items,
       mode: 'payment',
-      success_url: `https://seven17.netlify.app?success=true`,
-      cancel_url: `https://seven17.netlify.app?canceled=true`,
+      // --- CHANGE: Updated URLs to match your new Netlify site name ---
+      // It's best to use the Netlify URL here until your custom domain is fully set up.
+      success_url: `https://zap-buyz.netlify.app?success=true`,
+      cancel_url: `https://zap-buyz.netlify.app?canceled=true`,
     });
 
     res.json({ id: session.id });
@@ -50,4 +53,3 @@ app.post('/create-checkout-session', async (req, res) => {
 // --- START SERVER ---
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
