@@ -599,12 +599,12 @@ function App() {
                 }
                 clearCart();
                 navigate("/success");
-                window.history.replaceState(null, '', window.location.pathname);
+                window.history.replaceState(null, '', window.location.hash.split('?')[0]);
             }
             if (query.get("canceled")) {
                 navigate("/cancel");
                 localStorage.removeItem('cartForCheckout');
-                window.history.replaceState(null, '', window.location.pathname);
+                window.history.replaceState(null, '', window.location.hash.split('?')[0]);
             }
         };
         if (authChecked) { processCheckout(); }
