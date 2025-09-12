@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, createContext, useContext } fr
 import { HashRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, Menu, X, ChevronLeft, Star, Send, CheckCircle, XCircle, User, LogOut, ShieldCheck, Mail, Package, Settings, Sun, Leaf, Snowflake, Flower, Edit, Trash2, PlusCircle, MessageSquare } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
 const firebaseConfig = {
@@ -15,14 +18,9 @@ const firebaseConfig = {
 };
 
 const STRIPE_PUBLIC_KEY = 'pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3';
-// --- FINAL CHANGE: Pointing to the live Vercel server ---
 const STRIPE_SERVER_URL = 'https://zap-buyz-server.vercel.app/create-checkout-session';
 
 // --- FIREBASE SETUP ---
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -583,7 +581,7 @@ function App() {
 
     useEffect(() => {
         const processCheckout = async () => {
-            const query = new URLSearchParams(window.location.search);
+            const query = new URLSearchParams(window.location.hash.split('?')[1]);
             if (query.get("success") && user) {
                 const storedCart = localStorage.getItem('cartForCheckout');
                 if (storedCart) {
@@ -732,7 +730,7 @@ function App() {
 
             <AnimatePresence>
                 {isCartOpen && ( 
-                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200"><h2 className="text-xl font-bold">Shopping Cart</h2><button onClick={() => setIsCartOpen(false)} className="p-2 transition-colors duration-200 rounded-full hover:bg-gray-100" aria-label="Close cart"><X className="w-6 h-6" /></button></div>
                         <div className="flex-1 p-4 overflow-y-auto">
                             {cart.length === 0 ? <p className="text-gray-500">Your cart is empty.</p> : cart.map((item) => ( 
