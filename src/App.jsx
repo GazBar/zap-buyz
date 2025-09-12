@@ -598,13 +598,11 @@ function App() {
                     } catch (error) { console.error("Failed to save order:", error); }
                 }
                 clearCart();
-                navigate("/success");
-                window.history.replaceState(null, '', window.location.hash.split('?')[0]);
+                navigate("/success", { replace: true });
             }
             if (query.get("canceled")) {
-                navigate("/cancel");
                 localStorage.removeItem('cartForCheckout');
-                window.history.replaceState(null, '', window.location.hash.split('?')[0]);
+                navigate("/cancel", { replace: true });
             }
         };
         if (authChecked) { processCheckout(); }
