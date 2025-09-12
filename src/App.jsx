@@ -781,4 +781,3 @@ export default function AppWrapper() {
         </HashRouter>
     );
 }
-
