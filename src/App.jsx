@@ -517,28 +517,29 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            // No need to check for user here, it's handled by the guard clause
-            try {
-                const q = query(collection(db, "orders"), where("userId", "==", user.uid));
-                const snap = await getDocs(q);
-                const userOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                
-                userOrders.sort((a, b) => {
-                    const dateA = a.createdAt?.seconds || 0;
-                    const dateB = b.createdAt?.seconds || 0;
-                    return dateB - dateA;
-                });
+            if (user) {
+                try {
+                    const q = query(collection(db, "orders"), where("userId", "==", user.uid));
+                    const snap = await getDocs(q);
+                    const userOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    
+                    userOrders.sort((a, b) => {
+                        const dateA = a.createdAt?.seconds || 0;
+                        const dateB = b.createdAt?.seconds || 0;
+                        return dateB - dateA;
+                    });
 
-                setOrders(userOrders);
-            } catch (e) {
-                console.error("Failed to fetch orders:", e);
-                setModal({ title: 'Error', message: 'Could not load your order history.' });
-            } finally {
-                setLoadingOrders(false);
+                    setOrders(userOrders);
+                } catch (e) {
+                    console.error("Failed to fetch orders:", e);
+                    setModal({ title: 'Error', message: 'Could not load your order history.' });
+                } finally {
+                    setLoadingOrders(false);
+                }
             }
         };
 
-        if (activeTab === 'orders') {
+        if (activeTab === 'orders' && user) {
             fetchOrders();
         }
     }, [user, activeTab, setModal]);
