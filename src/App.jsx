@@ -497,18 +497,21 @@ const AuthPage = ({ setModal }) => {
 };
 
 const AccountPage = ({ user, setModal, favorites, products }) => {
-    const navigate = useNavigate();
     // FIX: All hooks are now called at the top level, unconditionally.
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [name, setName] = useState(user ? user.displayName || '' : '');
     const [email, setEmail] = useState(user ? user.email || '' : '');
-
-    // FIX: Add a guard clause to prevent crashes if the user object is not yet available.
-    if (!user) {
-        return <LoadingSpinner />;
-    }
+    
+    useEffect(() => {
+        // FIX: Ensure user data is updated in state if it changes after initial load.
+        if (user) {
+            setName(user.displayName || '');
+            setEmail(user.email || '');
+        }
+    }, [user]);
 
     const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
@@ -536,7 +539,7 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
             }
         };
 
-        if (activeTab === 'orders') {
+        if (activeTab === 'orders' && user) {
             fetchOrders();
         }
     }, [user, activeTab, setModal]);
@@ -544,6 +547,11 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
     const handleUpdateProfile = async (e) => { e.preventDefault(); try { if (auth.currentUser.displayName !== name) { await updateProfile(auth.currentUser, { displayName: name }); } if (auth.currentUser.email !== email) { await updateEmail(auth.currentUser, email); } await setDoc(doc(db, "users", user.uid), { name, email }, { merge: true }); setModal({ title: 'Success', message: 'Profile updated.' }); } catch (e) { setModal({ title: 'Error', message: e.message }); } };
     const handlePasswordReset = async () => { try { await sendPasswordResetEmail(auth, user.email); setModal({ title: 'Password Reset', message: 'Reset link sent to your email.' }); } catch (e) { setModal({ title: 'Error', message: e.message }); } };
     const handleLogout = async () => { await signOut(auth); navigate('/'); };
+    
+    // FIX: Add a guard clause to prevent rendering until the user object is fully available.
+    if (!user) {
+        return <LoadingSpinner />;
+    }
 
     return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt?.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
 
