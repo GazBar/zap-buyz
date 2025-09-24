@@ -27,7 +27,6 @@ const firebaseConfig = {
 const STRIPE_PUBLIC_KEY = 'pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3';
 const STRIPE_SERVER_URL = 'https://zap-buyz-server.vercel.app/create-checkout-session';
 
-
 // --- FIREBASE SETUP ---
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -407,9 +406,7 @@ const ProductDetailPage = ({ products, user, isAdmin, setModal, favorites, handl
             <div className="mt-12"><h2 className="text-3xl font-bold text-gray-900 mb-6">Customer Reviews</h2>{user ? ( <div className="p-6 mb-8 bg-white rounded-lg shadow-md"><h3 className="text-xl font-semibold mb-4">Leave a Review</h3><form onSubmit={handleReviewSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label><StarRatingInput rating={newRating} setRating={setNewRating} /></div><div><label htmlFor="comment" className="block text-sm font-medium text-gray-700">Your Comment</label><textarea id="comment" value={newComment} onChange={(e) => setNewComment(e.target.value)} rows="4" required className="w-full mt-1 p-2 border rounded-md focus:ring-lime-500 focus:border-lime-500"></textarea></div><button type="submit" className="px-4 py-2 font-semibold text-gray-900 bg-lime-500 rounded-md hover:bg-lime-600">Submit Review</button></form></div> ) : ( <p className="mb-8 p-4 bg-gray-100 rounded-md text-center">You must be <Link to="/login" className="font-bold text-lime-600 hover:underline">logged in</Link> to leave a review.</p> )}<div className="space-y-6">{loadingReviews ? <p>Loading reviews...</p> : reviews.length > 0 ? ( reviews.map(review => ( <div key={review.id} className="p-4 bg-white rounded-lg shadow relative"><div className="flex items-center mb-2"><p className="font-bold mr-4">{review.userName}</p><div className="flex items-center">{Array.from({ length: 5 }, (_, i) => <Star key={i} className={`w-5 h-5 ${i < review.rating ? 'text-lime-400 fill-current' : 'text-gray-300'}`} />)}</div></div><p className="text-gray-700 pr-12">{review.comment}</p><p className="text-xs text-gray-400 mt-2">{new Date(review.createdAt?.seconds * 1000).toLocaleString()}</p>{isAdmin && ( <button onClick={() => handleDeleteReview(review.id)} className="absolute top-2 right-2 p-2 text-red-500 hover:bg-red-100 rounded-full"><Trash2 className="w-5 h-5" /></button> )}</div> )) ) : <p>No reviews yet. Be the first!</p>}</div></div>
         </motion.div>
     );
-};
-
-const CheckoutResultPage = ({ success }) => {
+};const CheckoutResultPage = ({ success }) => {
     const navigate = useNavigate();
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 mx-auto max-w-2xl sm:p-6 lg:p-8 text-center">
@@ -421,9 +418,7 @@ const CheckoutResultPage = ({ success }) => {
             </div>
         </motion.div>
     );
-};
-
-const ContactPage = ({ setModal }) => { 
+};const ContactPage = ({ setModal }) => { 
     const [name, setName] = useState(''); 
     const [email, setEmail] = useState(''); 
     const [message, setMessage] = useState(''); 
@@ -456,9 +451,7 @@ const ContactPage = ({ setModal }) => {
             </div>
         </motion.div> 
     ); 
-};
-
-const AuthPage = ({ setModal }) => { 
+};const AuthPage = ({ setModal }) => { 
     const [isLogin, setIsLogin] = useState(true); 
     const [email, setEmail] = useState(''); 
     const [password, setPassword] = useState(''); 
@@ -502,12 +495,7 @@ const AuthPage = ({ setModal }) => {
             </div>
         </motion.div> 
     ); 
-};
-
-// ==================================================================
-// ===               FIXED COMPONENT STARTS HERE                ===
-// ==================================================================
-const AccountPage = ({ user, setModal, favorites, products }) => {
+};const AccountPage = ({ user, setModal, favorites, products }) => {
     // FIX: All hooks are now called at the top level, unconditionally.
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('orders');
@@ -564,13 +552,7 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
         return <LoadingSpinner />;
     }
 
-    return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt?.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
-// ==================================================================
-// ===                FIXED COMPONENT ENDS HERE                 ===
-// ==================================================================
-
-
-const AdminPage = ({ user, products, setProducts, setModal }) => {
+    return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt?.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };const AdminPage = ({ user, products, setProducts, setModal }) => {
     // This component's internal logic remains unchanged.
     return <div className="p-8">Admin Page Content</div>;
 };
@@ -757,7 +739,7 @@ function App() {
 
             <AnimatePresence>
                 {isCartOpen && ( 
-                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200"><h2 className="text-xl font-bold">Shopping Cart</h2><button onClick={() => setIsCartOpen(false)} className="p-2 transition-colors duration-200 rounded-full hover:bg-gray-100" aria-label="Close cart"><X className="w-6 h-6" /></button></div>
                         <div className="flex-1 p-4 overflow-y-auto">
                             {cart.length === 0 ? <p className="text-gray-500">Your cart is empty.</p> : cart.map((item) => ( 
@@ -803,3 +785,4 @@ export default function AppWrapper() {
         </HashRouter>
     );
 }
+
