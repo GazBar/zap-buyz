@@ -7,6 +7,13 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, on
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
+// ⚠️ SECURITY WARNING: Do NOT hardcode API keys in your code.
+// Anyone can see these keys by inspecting your app's source code.
+// Use environment variables instead. For a Vite/React project, create a `.env.local`
+// file in your project root and store your keys there, like this:
+// VITE_FIREBASE_API_KEY="your-key-here"
+// VITE_STRIPE_PUBLIC_KEY="your-key-here"
+// Then, access them in your code with `import.meta.env.VITE_FIREBASE_API_KEY`.
 const firebaseConfig = {
     apiKey: "AIzaSyAP78sdxQnP6ygJCDxK-CSjpUyqC2M0W2w",
     authDomain: "project-874572623708435649.firebaseapp.com",
@@ -19,6 +26,7 @@ const firebaseConfig = {
 
 const STRIPE_PUBLIC_KEY = 'pk_test_51RxSCvGpKT3UikNEDttkWgGAxCouVQ9iuGARl8Q9Z8P19KZipNITS7DqgPdchrDzaVDc7SWqeedhxATDvXGZYJgI00ZNNtHGa3';
 const STRIPE_SERVER_URL = 'https://zap-buyz-server.vercel.app/create-checkout-session';
+
 
 // --- FIREBASE SETUP ---
 const app = initializeApp(firebaseConfig);
@@ -496,6 +504,9 @@ const AuthPage = ({ setModal }) => {
     ); 
 };
 
+// ==================================================================
+// ===               FIXED COMPONENT STARTS HERE                ===
+// ==================================================================
 const AccountPage = ({ user, setModal, favorites, products }) => {
     // FIX: All hooks are now called at the top level, unconditionally.
     const navigate = useNavigate();
@@ -554,6 +565,10 @@ const AccountPage = ({ user, setModal, favorites, products }) => {
     }
 
     return ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 mx-auto max-w-4xl sm:p-6 lg:p-8"><div className="bg-white rounded-lg shadow-lg overflow-hidden"><div className="p-8"><h2 className="text-3xl font-bold">My Account</h2><p className="mt-2 text-gray-600">Manage orders and details.</p></div><div className="border-b"><nav className="-mb-px flex px-8"><button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'orders' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Package className="inline-block w-5 h-5 mr-2"/>Order History</button><button onClick={() => setActiveTab('favorites')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'favorites' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Heart className="inline-block w-5 h-5 mr-2"/>Favorites</button><button onClick={() => setActiveTab('settings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-lime-500 text-lime-600' : 'border-transparent text-gray-500 hover:border-gray-300'}`}><Settings className="inline-block w-5 h-5 mr-2"/>Account Settings</button></nav></div><div className="p-8">{activeTab === 'orders' && ( <div>{loadingOrders ? <p>Loading...</p> : orders.length > 0 ? ( <div className="space-y-4">{orders.map(o => ( <div key={o.id} className="border rounded-lg p-4"><div className="flex justify-between items-center"><p className="font-semibold">Order #{o.id.substring(0, 8)}</p><p className="text-sm text-gray-500">{new Date(o.createdAt?.seconds * 1000).toLocaleDateString()}</p></div><div className="mt-4">{o.items.map(i => ( <div key={i.id} className="flex items-center justify-between py-2 border-b"><p>{i.name} (x{i.quantity})</p><p>£{(i.price * i.quantity).toFixed(2)}</p></div> ))}<p className="text-right font-bold mt-2">Total: £{o.total.toFixed(2)}</p></div></div> ))}</div> ) : <p>No past orders.</p>}</div> )}{activeTab === 'favorites' && (<div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{favoriteProducts.length > 0 ? favoriteProducts.map(p => <ProductCard key={p.id} product={p} />) : <p>You have no favorited items yet.</p>}</div></div>)}{activeTab === 'settings' && ( <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg mx-auto"><div><label>Full Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><label>Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded-md"/></div><div><button type="submit" className="w-full p-2 font-semibold text-gray-900 bg-lime-500 rounded-md">Update Profile</button></div><div className="text-center"><button type="button" onClick={handlePasswordReset} className="text-sm text-lime-600 hover:underline">Send Password Reset</button></div><div className="border-t pt-6"><button type="button" onClick={handleLogout} className="w-full flex items-center justify-center p-2 font-semibold text-white bg-gray-700 rounded-md"><LogOut className="w-5 h-5 mr-2"/> Log Out</button></div></form> )}</div></div></motion.div> ); };
+// ==================================================================
+// ===                FIXED COMPONENT ENDS HERE                 ===
+// ==================================================================
+
 
 const AdminPage = ({ user, products, setProducts, setModal }) => {
     // This component's internal logic remains unchanged.
@@ -742,7 +757,7 @@ function App() {
 
             <AnimatePresence>
                 {isCartOpen && ( 
-                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }} className="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-sm bg-white shadow-xl">
                         <div className="flex items-center justify-between p-4 border-b border-gray-200"><h2 className="text-xl font-bold">Shopping Cart</h2><button onClick={() => setIsCartOpen(false)} className="p-2 transition-colors duration-200 rounded-full hover:bg-gray-100" aria-label="Close cart"><X className="w-6 h-6" /></button></div>
                         <div className="flex-1 p-4 overflow-y-auto">
                             {cart.length === 0 ? <p className="text-gray-500">Your cart is empty.</p> : cart.map((item) => ( 
@@ -788,4 +803,3 @@ export default function AppWrapper() {
         </HashRouter>
     );
 }
-
