@@ -7,13 +7,6 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, on
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs, where, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
-// ⚠️ SECURITY WARNING: Do NOT hardcode API keys in your code.
-// Anyone can see these keys by inspecting your app's source code.
-// Use environment variables instead. For a Vite/React project, create a `.env.local`
-// file in your project root and store your keys there, like this:
-// VITE_FIREBASE_API_KEY="your-key-here"
-// VITE_STRIPE_PUBLIC_KEY="your-key-here"
-// Then, access them in your code with `import.meta.env.VITE_FIREBASE_API_KEY`.
 const firebaseConfig = {
     apiKey: "AIzaSyAP78sdxQnP6ygJCDxK-CSjpUyqC2M0W2w",
     authDomain: "project-874572623708435649.firebaseapp.com",
