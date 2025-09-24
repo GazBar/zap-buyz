@@ -497,17 +497,18 @@ const AuthPage = ({ setModal }) => {
 };
 
 const AccountPage = ({ user, setModal, favorites, products }) => {
+    const navigate = useNavigate();
+    // FIX: All hooks are now called at the top level, unconditionally.
+    const [activeTab, setActiveTab] = useState('orders');
+    const [orders, setOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [name, setName] = useState(user ? user.displayName || '' : '');
+    const [email, setEmail] = useState(user ? user.email || '' : '');
+
     // FIX: Add a guard clause to prevent crashes if the user object is not yet available.
     if (!user) {
         return <LoadingSpinner />;
     }
-
-    const [activeTab, setActiveTab] = useState('orders');
-    const [orders, setOrders] = useState([]);
-    const [loadingOrders, setLoadingOrders] = useState(true);
-    const [name, setName] = useState(user.displayName || '');
-    const [email, setEmail] = useState(user.email || '');
-    const navigate = useNavigate();
 
     const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
